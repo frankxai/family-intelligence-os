@@ -1,0 +1,20 @@
+{
+  "name": "@family/mcp-gateway",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc --noEmit",
+    "dev": "tsx src/server.ts",
+    "lint": "tsc --noEmit",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@family/audit": "workspace:*",
+    "@family/connectors": "workspace:*",
+    "@family/core": "workspace:*",
+    "@family/mcp": "workspace:*",
+    "@family/security": "workspace:*"
+  }
+}
+

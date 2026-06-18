@@ -1,0 +1,19 @@
+{
+  "name": "@family/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "next build",
+    "dev": "next dev",
+    "lint": "tsc --noEmit",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@family/audit": "workspace:*",
+    "@family/connectors": "workspace:*",
+    "@family/core": "workspace:*",
+    "@family/security": "workspace:*"
+  },
+  "devDependencies": {}
+}
