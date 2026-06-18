@@ -14,6 +14,7 @@ This repo is the orchestration layer: Next.js portal, MCP gateway, connector con
 - `packages/family-audit`: audit event types and writers.
 - `packages/family-connectors`: adapter contract and manifest schema.
 - `packages/family-mcp`: tool schemas, safe handlers, and sanitizers.
+- `agent-packs/family-guardian-network`: Guardian, documentation, research, household, gathering, elder, contact, and personal-hub agent concept.
 
 ## Defaults
 
@@ -22,6 +23,7 @@ This repo is the orchestration layer: Next.js portal, MCP gateway, connector con
 - Writes and exports are blocked or confirmation-required.
 - Raw sensitive data should remain in family-owned systems.
 - MCP is a controlled gateway, not an open tool buffet.
+- Personal hubs are private-first; contributions to family or public libraries require approval and Guardian review.
 
 ## Local Commands
 
@@ -36,4 +38,3 @@ pnpm --filter @family/web dev
 ## Deployment
 
 The first deployment target is a Vercel preview for `apps/web`. Production promotion requires separate review.
-

@@ -1,9 +1,8 @@
 import { expect, test } from "@playwright/test";
 
-for (const path of ["/", "/dashboard", "/connectors", "/audit", "/security"]) {
+for (const path of ["/", "/dashboard", "/connectors", "/audit", "/security", "/library"]) {
   test(`renders ${path}`, async ({ page }) => {
     await page.goto(path);
     await expect(page.locator("body")).toContainText("Family");
   });
 }
-

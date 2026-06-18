@@ -1,0 +1,24 @@
+id: family_guardian_network
+name: Family Guardian Network
+purpose: Privacy, consent, documentation, research, household organization, elder support, contact stewardship, and personal hubs.
+agents:
+  - guardian_agent
+  - documentation_agent
+  - research_agent
+  - household_life_agent
+  - gathering_organizer_agent
+  - elder_support_agent
+  - contact_steward_agent
+  - personal_hub_agent
+memory_scopes:
+  - private
+  - household
+  - family
+  - extended_family
+  - trusted_advisor
+  - public
+requires_guardian_review: true
+public_library:
+  compatible: true
+  default_target: frankx.ai/library
+  publish_default: blocked_until_approved

@@ -23,7 +23,8 @@ const navItems = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/connectors", label: "Connectors" },
   { href: "/audit", label: "Audit" },
-  { href: "/security", label: "Security" }
+  { href: "/security", label: "Security" },
+  { href: "/library", label: "Library" }
 ];
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
@@ -48,4 +49,3 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     </html>
   );
 }
-
