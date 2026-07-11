@@ -1,0 +1,99 @@
+{
+  "version": "2026-06-23",
+  "task": "Create a German private family portal shell that stays locked in production until family-scoped authentication exists.",
+  "surface": "Next.js private portal route",
+  "audience": "Invited family members and human family stewards",
+  "first_read": "No family data loads without a personal, family-scoped session.",
+  "standards": [
+    "design-agent-standards/OUTCOMES.md",
+    "design-agent-standards/AGENTIC_DESIGN_LOOP.md",
+    "design-agent-standards/PREMIUM_ASSET_STANDARD.md",
+    "_intelligence/operating-system.md"
+  ],
+  "references": [
+    {
+      "label": "Family circles doctrine",
+      "source": "family-intelligence-systems/canon/family-circles-and-guardianship.md",
+      "reason": "Canonical access model and child-safe scope"
+    },
+    {
+      "label": "German portal doctrine",
+      "source": "family-intelligence-systems/canon/german-family-portal.md",
+      "reason": "German information architecture and terminology"
+    }
+  ],
+  "direction": {
+    "keep": [
+      "Fail-closed production state",
+      "Plain German and calm institutional tone",
+      "Exact access circles and review states"
+    ],
+    "avoid": [
+      "Fake relatives or activity metrics",
+      "Social-feed styling",
+      "Generic glass dashboard grid",
+      "Decorative family-tree imagery"
+    ],
+    "signature": "A privacy seal beside six explicit family circles.",
+    "system": [
+      "Graphite and warm ivory foundation",
+      "Sage trust state",
+      "Geist sentence-case hierarchy",
+      "No images, 3D, video, or continuous motion"
+    ]
+  },
+  "asset_quality": {
+    "tier": "C",
+    "source_method": "product-capture",
+    "provenance": "owned",
+    "why_premium": "The authorization model itself is the primary exact UI asset, with no decorative substitute.",
+    "shortcut_risk": "low",
+    "context_tested": false
+  },
+  "artifacts": [
+    {
+      "path_or_url": "apps/web/app/de/portal/page.tsx",
+      "kind": "web",
+      "inspected": false,
+      "notes": "Typechecked and covered by access tests; browser inspection held by PP."
+    },
+    {
+      "path_or_url": "apps/web/app/globals.css",
+      "kind": "ui",
+      "inspected": false,
+      "notes": "Responsive layout implemented; desktop/mobile capture pending."
+    }
+  ],
+  "checks": [
+    {
+      "name": "asset-tier",
+      "status": "pass",
+      "evidence": "Tier C exact UI is the correct premium medium."
+    },
+    {
+      "name": "export-inspection",
+      "status": "blocked",
+      "evidence": "PP build/browser workload is on HOLD."
+    },
+    {
+      "name": "visual-qa",
+      "status": "blocked",
+      "evidence": "Desktop and mobile browser inspection pending."
+    },
+    {
+      "name": "production-lock",
+      "status": "pass",
+      "evidence": "Unit tests prove demo mode is ignored in production and a family-scoped session is required."
+    }
+  ],
+  "score": {
+    "total": 23,
+    "max": 30,
+    "notes": "Trust model and static composition are implemented; build and visual QA are still required."
+  },
+  "decision": "iterate",
+  "known_risks": [
+    "Production authentication adapter is intentionally not implemented.",
+    "No Vercel preview or browser inspection while PP holds build/browser workloads."
+  ]
+}

@@ -11,6 +11,10 @@ const actorContextSchema = z.object({
     .enum([
       "family_owner",
       "family_admin",
+      "family_steward",
+      "branch_steward",
+      "continuity_guardian",
+      "independent_reviewer",
       "adult_member",
       "teen_member",
       "child_member",
@@ -239,4 +243,3 @@ export const familyMcpToolDefinitions = definitions.map(({ name, title, descript
   sensitivity,
   connectorId
 }));
-

@@ -1,5 +1,7 @@
 import type { Sensitivity } from "@family/core";
 
+export * from "./schema";
+
 export type FamilyAuditEvent = {
   id: string;
   familyId: string;
@@ -48,4 +50,3 @@ export function createAuditEvent(input: Omit<FamilyAuditEvent, "id" | "timestamp
     timestamp: new Date().toISOString()
   };
 }
-
