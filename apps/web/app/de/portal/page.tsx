@@ -39,6 +39,11 @@ export default function GermanFamilyPortalPage() {
     authConfigured: process.env.FAMILY_AUTH_CONFIGURED === "true",
     session: null
   });
+  const accessReasonDe = access.mode === "authorized"
+    ? "Authentifizierte, familiengebundene Sitzung."
+    : access.mode === "demo"
+      ? "Synthetische Vorschau; es werden keine Familiendatensätze geladen."
+      : "Persönliche Authentifizierung und eine familiengebundene Sitzung sind erforderlich.";
 
   if (access.mode === "locked") {
     return (
@@ -51,7 +56,7 @@ export default function GermanFamilyPortalPage() {
             Es werden keine Familiendaten geladen. Der Zugang wird erst geöffnet, wenn persönliche
             Konten, Familienzuordnung, Wiederherstellung und Protokollierung vollständig eingerichtet sind.
           </p>
-          <div className="notice"><ShieldCheck size={18} aria-hidden="true" /> {access.reason}</div>
+          <div className="notice"><ShieldCheck size={18} aria-hidden="true" /> {accessReasonDe}</div>
           <span className="button" aria-disabled="true">
             Persönliche Einladung erforderlich <ArrowRight size={17} aria-hidden="true" />
           </span>
@@ -75,7 +80,7 @@ export default function GermanFamilyPortalPage() {
         <div className="privacy-seal">
           <ShieldCheck size={28} aria-hidden="true" />
           <strong>Keine echten Familiendaten</strong>
-          <span>{access.reason}</span>
+          <span>{accessReasonDe}</span>
         </div>
       </div>
 
