@@ -18,8 +18,9 @@ This repo is the orchestration layer: Next.js portal, MCP gateway, connector con
 - `packages/family-succession`: separate emergency, incapacity, and death release gates.
 - `packages/family-gedcom`: deterministic GEDCOM 7 interoperability projection for already-approved export data.
 - `packages/family-export`: encrypted export-manifest and scope/exclusion authorization contract.
+- `packages/family-intake`: one-time intake tokens, quarantine-first cases, attachment policy, and human-only decision transitions.
 - `packages/family-connectors`: adapter contract and manifest schema.
-- `packages/family-mcp`: tool schemas, safe handlers, and sanitizers.
+- `packages/family-mcp`: strict tool schemas, trusted server-side actor binding, safe handlers, and sanitizers.
 - `agent-packs/family-guardian-network`: Guardian, documentation, research, household, gathering, elder, contact, and personal-hub agent concept.
 
 ## Defaults
@@ -29,6 +30,7 @@ This repo is the orchestration layer: Next.js portal, MCP gateway, connector con
 - Writes and exports are blocked or confirmation-required.
 - Raw sensitive data should remain in family-owned systems.
 - MCP is a controlled gateway, not an open tool buffet.
+- MCP callers cannot supply their family, actor, or role. A trusted server binding resolves identity before policy evaluation.
 - Personal hubs are private-first; contributions to family or public libraries require approval and Guardian review.
 - Family history enters as a claim, never as an accepted fact.
 - Living people are private by default; children cannot enter the public archive.
@@ -41,11 +43,18 @@ This repo is the orchestration layer: Next.js portal, MCP gateway, connector con
 
 No real relative names or family records belong in repository fixtures. The UI demonstrates circles and review states with generic labels only.
 
+## Secure intake
+
+`@family/intake` turns submissions into quarantined cases. It can generate hashed, expiring, single-use tokens and assess baseline attachment eligibility, but it never accepts a claim. Actual upload storage, magic-byte inspection, malware scanning, identity re-verification, and notification delivery remain adapter boundaries that must fail closed.
+
 ## Reusable templates
 
 - `templates/vercel-family-portal`: Vercel project settings and environment contract.
 - `templates/v0-family-portal`: a safety-bounded v0 prompt and acceptance checklist.
+- `templates/private-family-pilot`: a policy-only German pilot manifest with no personal records.
 - `vercel.json`: one-path monorepo build for `@family/web`.
+
+[Deploy the locked template to Vercel](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Ffrankxai%2Ffamily-intelligence-os&project-name=family-intelligence-portal&repository-name=family-intelligence-portal). The clone is intentionally not a production-ready family vault: it stays locked until identity, private storage, scanning, audit persistence, export/restore, and human approval gates are connected.
 
 ## Local Commands
 

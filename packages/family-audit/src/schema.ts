@@ -9,9 +9,27 @@ export const families = pgTable("families", {
 export const familyMembers = pgTable("family_members", {
   id: text("id").primaryKey(),
   familyId: text("family_id").notNull(),
+  accountId: text("account_id"),
   displayName: text("display_name").notNull(),
   role: text("role").notNull(),
   email: text("email"),
+  status: text("status").notNull().default("active"),
+  invitedByMemberId: text("invited_by_member_id"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  revokedAt: timestamp("revoked_at", { withTimezone: true })
+});
+
+export const familyInvitations = pgTable("family_invitations", {
+  id: text("id").primaryKey(),
+  familyId: text("family_id").notNull(),
+  recipientBindingRef: text("recipient_binding_ref").notNull(),
+  role: text("role").notNull(),
+  invitedByMemberId: text("invited_by_member_id").notNull(),
+  secretHashRef: text("secret_hash_ref").notNull(),
+  status: text("status").notNull().default("pending"),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  acceptedAt: timestamp("accepted_at", { withTimezone: true }),
+  revokedAt: timestamp("revoked_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
 });
 
@@ -49,6 +67,60 @@ export const confirmationRequests = pgTable("confirmation_requests", {
   reason: text("reason").notNull(),
   metadata: jsonb("metadata"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
+});
+
+export const intakeTokens = pgTable("intake_tokens", {
+  id: text("id").primaryKey(),
+  familyId: text("family_id").notNull(),
+  issuedByMemberId: text("issued_by_member_id").notNull(),
+  secretHash: text("secret_hash").notNull(),
+  recipientBindingRef: text("recipient_binding_ref"),
+  allowedAction: text("allowed_action").notNull(),
+  minimumScope: text("minimum_scope").notNull(),
+  status: text("status").notNull().default("active"),
+  maxUses: integer("max_uses").notNull().default(1),
+  useCount: integer("use_count").notNull().default(0),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  redeemedAt: timestamp("redeemed_at", { withTimezone: true }),
+  revokedAt: timestamp("revoked_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
+});
+
+export const intakeCases = pgTable("intake_cases", {
+  id: text("id").primaryKey(),
+  familyId: text("family_id").notNull(),
+  intakeTokenId: text("intake_token_id"),
+  claimantRef: text("claimant_ref"),
+  channel: text("channel").notNull(),
+  state: text("state").notNull().default("quarantined"),
+  privacyScope: text("privacy_scope").notNull().default("self"),
+  minorImpact: text("minor_impact").notNull().default("none_known"),
+  affectedPersonRefs: jsonb("affected_person_refs").notNull(),
+  attachmentRefs: jsonb("attachment_refs").notNull(),
+  claimRefs: jsonb("claim_refs").notNull(),
+  consentRefs: jsonb("consent_refs").notNull(),
+  stewardDecisionRef: text("steward_decision_ref"),
+  rejectionCode: text("rejection_code"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  closedAt: timestamp("closed_at", { withTimezone: true })
+});
+
+export const intakeAttachments = pgTable("intake_attachments", {
+  id: text("id").primaryKey(),
+  familyId: text("family_id").notNull(),
+  caseId: text("case_id").notNull(),
+  storageRef: text("storage_ref").notNull(),
+  originalFileNameRef: text("original_file_name_ref"),
+  declaredMime: text("declared_mime").notNull(),
+  detectedMime: text("detected_mime"),
+  sizeBytes: integer("size_bytes").notNull(),
+  sha256: text("sha256").notNull(),
+  scanStatus: text("scan_status").notNull().default("pending"),
+  quarantined: boolean("quarantined").notNull().default(true),
+  rejectionCode: text("rejection_code"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  scannedAt: timestamp("scanned_at", { withTimezone: true })
 });
 
 export const familyCircleAssignments = pgTable("family_circle_assignments", {

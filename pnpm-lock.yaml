@@ -80,6 +80,9 @@ importers:
       '@family/audit':
         specifier: workspace:*
         version: link:../../packages/family-audit
+      '@family/auth':
+        specifier: workspace:*
+        version: link:../../packages/family-auth
       '@family/connectors':
         specifier: workspace:*
         version: link:../../packages/family-connectors
@@ -194,6 +197,15 @@ importers:
         version: 4.4.3
 
   packages/family-gedcom: {}
+
+  packages/family-intake:
+    dependencies:
+      '@family/core':
+        specifier: workspace:*
+        version: link:../family-core
+      zod:
+        specifier: ^4.2.0
+        version: 4.4.3
 
   packages/family-mcp:
     dependencies:

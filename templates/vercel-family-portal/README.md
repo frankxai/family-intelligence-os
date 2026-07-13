@@ -2,6 +2,10 @@
 
 This blueprint deploys the monorepo's `@family/web` application without weakening the privacy defaults.
 
+[Create a locked Vercel clone](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Ffrankxai%2Ffamily-intelligence-os&project-name=family-intelligence-portal&repository-name=family-intelligence-portal)
+
+The button follows Vercel's repository clone flow. It produces a locked shell, not an activated family-data service.
+
 ## Vercel project settings
 
 - Repository root: repository root (do not select `apps/web`)

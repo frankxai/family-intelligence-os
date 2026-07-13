@@ -20,6 +20,8 @@ Create `/de/portal` with two states:
 - A steward review queue for claims, evidence, consent, publication, disputes, and continuity.
 - A compact provenance pattern that distinguishes Behauptung, Quelle, Prüfung, and Entscheidung.
 - A continuity panel that keeps Notfall, Handlungsunfähigkeit, and Tod as separate protocols.
+- A secure contribution empty state that explains one-time links, quarantine, malware scanning, and steward review without pretending uploads are active.
+- Separate navigation for Nachkommen & Patenschaften with guardian-managed, age-transition language and no child profiles.
 
 ## Non-negotiable safety rules
 
@@ -29,6 +31,7 @@ Create `/de/portal` with two states:
 - Publication requires purpose-specific active consent for every affected living adult plus a human redaction review.
 - Inactivity is never a succession trigger.
 - Every control must expose its scope and audit consequence.
+- The caller can never choose its own family ID, actor ID, or role.
 
 ## Visual direction
 

@@ -1,12 +1,12 @@
 import { z } from "zod";
 import type { AuditWriter } from "@family/audit";
 import { createAuditEvent } from "@family/audit";
-import type { ActionClass, Sensitivity } from "@family/core";
+import type { ActionClass, FamilyRole, Sensitivity } from "@family/core";
 import { evaluatePolicy } from "@family/security";
 
 const actorContextSchema = z.object({
-  familyId: z.string().min(1).default("demo_family"),
-  actorId: z.string().min(1).default("demo_actor"),
+  familyId: z.string().min(1),
+  actorId: z.string().min(1),
   actorRole: z
     .enum([
       "family_owner",
@@ -24,22 +24,21 @@ const actorContextSchema = z.object({
       "agent",
       "service_account"
     ])
-    .default("agent")
-});
+}).strict();
 
-const queryToolSchema = actorContextSchema.extend({
+const queryToolSchema = z.object({
   query: z.string().min(1).max(200).default("summary"),
   limit: z.number().int().min(1).max(25).default(5)
-});
+}).strict();
 
-const simpleToolSchema = actorContextSchema.extend({
+const simpleToolSchema = z.object({
   range: z.string().max(80).default("next_7_days")
-});
+}).strict();
 
-const memoryToolSchema = actorContextSchema.extend({
+const memoryToolSchema = z.object({
   title: z.string().min(1).max(120),
   note: z.string().min(1).max(1000)
-});
+}).strict();
 
 export type FamilyMcpTool = {
   name: string;
@@ -51,6 +50,13 @@ export type FamilyMcpTool = {
 
 export type FamilyMcpToolOptions = {
   auditWriter: AuditWriter;
+  resolveActorContext: () => TrustedActorContext | Promise<TrustedActorContext>;
+};
+
+export type TrustedActorContext = {
+  familyId: string;
+  actorId: string;
+  actorRole: FamilyRole;
 };
 
 type ToolDefinition = {
@@ -182,7 +188,8 @@ export function createFamilyMcpTools(options: FamilyMcpToolOptions): FamilyMcpTo
     inputSchema: definition.schema,
     async handler(input: unknown) {
       const parsed = definition.schema.parse(input);
-      const context = actorContextSchema.parse(parsed);
+      void parsed;
+      const context = actorContextSchema.parse(await options.resolveActorContext());
       const decision = evaluatePolicy({
         familyId: context.familyId,
         actorId: context.actorId,
@@ -232,7 +239,11 @@ export function createFamilyMcpTools(options: FamilyMcpToolOptions): FamilyMcpTo
 }
 
 export function sanitizeOutput(value: string): string {
-  return value.replaceAll(process.env.PAPERLESS_API_TOKEN ?? "__never__", "[redacted]");
+  const configuredSecrets = [process.env.PAPERLESS_API_TOKEN].filter(
+    (secret): secret is string => Boolean(secret && secret.length >= 8)
+  );
+
+  return configuredSecrets.reduce((sanitized, secret) => sanitized.replaceAll(secret, "[redacted]"), value);
 }
 
 export const familyMcpToolDefinitions = definitions.map(({ name, title, description, actionClass, sensitivity, connectorId }) => ({

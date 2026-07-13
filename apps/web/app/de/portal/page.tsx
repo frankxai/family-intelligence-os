@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ArrowRight, CircleDot, Clock3, LockKeyhole, ShieldCheck, UsersRound } from "lucide-react";
+import { ArrowRight, CircleDot, Clock3, FileWarning, Fingerprint, LockKeyhole, ShieldAlert, ShieldCheck, UsersRound } from "lucide-react";
 import { resolvePortalAccess } from "@family/auth";
 
 export const dynamic = "force-dynamic";
@@ -17,6 +17,7 @@ const circles = [
   ["Engster Kreis", "Vertrauenspersonen mit genau definiertem Zugriff"],
   ["Erweiterte Familie", "Verwandtschaft, Geschichten und gemeinsame Termine"],
   ["Nachkommen & Patenschaften", "Geschützte Begleitung mit altersgerechten Rechten"],
+  ["Vertrauenspersonen", "Befristeter, zweckgebundener Zugang für fachliche Hilfe"],
   ["Öffentliches Archiv", "Nur einzeln freigegebene, redigierte Inhalte"]
 ] as const;
 
@@ -24,8 +25,12 @@ const queue = [
   ["Neue Aussage", "0", "Muss als Behauptung geprüft werden"],
   ["Einwilligung offen", "0", "Ohne Freigabe keine Weitergabe"],
   ["Quellenprüfung", "0", "Beleg, Herkunft und Nutzungsrecht prüfen"],
+  ["Sicherer Eingang", "0", "Einmal-Link, Quarantäne und Scanstatus prüfen"],
   ["Kontinuitätsprüfung", "0", "Menschliche Entscheidung und Guardian-Quorum"]
 ] as const;
+
+const intakeSteps = ["Einmal-Link", "Quarantäne", "Datei- & Malware-Prüfung", "Steward-Entscheidung"] as const;
+const continuitySteps = ["Notfall", "Handlungsunfähigkeit", "Tod"] as const;
 
 export default function GermanFamilyPortalPage() {
   const access = resolvePortalAccess({
@@ -75,8 +80,8 @@ export default function GermanFamilyPortalPage() {
       </div>
 
       <div className="portal-section-heading">
-        <div><p className="kicker">Zugriffsmodell</p><h2>Sechs getrennte Familienkreise</h2></div>
-        <p>Ein Inhalt gehört immer genau in den kleinsten passenden Kreis.</p>
+        <div><p className="kicker">Zugriffsmodell</p><h2>Sieben getrennte Familienkreise</h2></div>
+        <p>Verwandtschaft, Haushalt, Patenschaft, Guardian-Rolle und Zugriff bleiben getrennte Beziehungen.</p>
       </div>
       <div className="circle-grid">
         {circles.map(([title, description], index) => (
@@ -101,6 +106,36 @@ export default function GermanFamilyPortalPage() {
             <strong>{count}</strong>
           </article>
         ))}
+      </div>
+
+      <div className="portal-control-grid">
+        <article className="control-panel">
+          <div className="control-heading">
+            <FileWarning size={22} aria-hidden="true" />
+            <div><p className="kicker">Mitmachen</p><h2>Sicherer Eingang</h2></div>
+          </div>
+          <p>Kein aktiver Upload: Der Adapter bleibt geschlossen, bis Token, Speicherung, Scan und Audit verbunden sind.</p>
+          <ol className="control-steps">
+            {intakeSteps.map((step, index) => (
+              <li key={step}><span>0{index + 1}</span>{step}</li>
+            ))}
+          </ol>
+          <div className="status-chip status-chip-waiting"><Fingerprint size={14} aria-hidden="true" /> Privater Adapter fehlt</div>
+        </article>
+
+        <article className="control-panel">
+          <div className="control-heading">
+            <ShieldAlert size={22} aria-hidden="true" />
+            <div><p className="kicker">Kontinuität</p><h2>Drei getrennte Protokolle</h2></div>
+          </div>
+          <p>Kein Timer und kein Agent darf allein freigeben. Jeder Weg braucht Nachweis, Wartezeit, menschliches Quorum und begrenzte Endfreigabe.</p>
+          <ol className="control-steps">
+            {continuitySteps.map((step, index) => (
+              <li key={step}><span>0{index + 1}</span>{step}</li>
+            ))}
+          </ol>
+          <div className="status-chip status-chip-blocked"><LockKeyhole size={14} aria-hidden="true" /> Autonome Freigabe blockiert</div>
+        </article>
       </div>
     </section>
   );

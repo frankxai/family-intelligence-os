@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resolvePortalAccess } from "./index";
+import { resolveMcpGatewayActorContext, resolvePortalAccess } from "./index";
 
 describe("family portal access", () => {
   it("never enables demo mode in production", () => {
@@ -28,5 +28,35 @@ describe("family portal access", () => {
         }
       })
     ).toMatchObject({ mode: "authorized" });
+  });
+
+  it("fails closed when the MCP gateway has no trusted actor binding", () => {
+    expect(() =>
+      resolveMcpGatewayActorContext({ nodeEnv: "production", demoEnabled: false })
+    ).toThrow("requires a trusted family, actor, and role binding");
+  });
+
+  it("rejects human-role impersonation on the stdio MCP boundary", () => {
+    expect(() =>
+      resolveMcpGatewayActorContext({
+        nodeEnv: "production",
+        demoEnabled: false,
+        familyId: "family_1",
+        actorId: "person_1",
+        actorRole: "family_owner"
+      })
+    ).toThrow("only an agent or service-account identity");
+  });
+
+  it("accepts a production service account with an explicit tenant binding", () => {
+    expect(
+      resolveMcpGatewayActorContext({
+        nodeEnv: "production",
+        demoEnabled: false,
+        familyId: "family_1",
+        actorId: "service_1",
+        actorRole: "service_account"
+      })
+    ).toEqual({ familyId: "family_1", actorId: "service_1", actorRole: "service_account" });
   });
 });

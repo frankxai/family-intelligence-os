@@ -51,3 +51,33 @@ export function createDemoActorContext(): ActorContext {
     actorRole: "agent"
   };
 }
+
+export function resolveMcpGatewayActorContext(input: {
+  nodeEnv: "development" | "test" | "production";
+  demoEnabled: boolean;
+  familyId?: string;
+  actorId?: string;
+  actorRole?: string;
+}): ActorContext {
+  if (input.nodeEnv !== "production" && input.demoEnabled) {
+    return createDemoActorContext();
+  }
+
+  if (!input.familyId || !input.actorId || !input.actorRole) {
+    throw new Error("The MCP gateway requires a trusted family, actor, and role binding.");
+  }
+
+  if (input.actorRole !== "agent" && input.actorRole !== "service_account") {
+    throw new Error("A stdio MCP gateway may bind only an agent or service-account identity.");
+  }
+
+  if (input.nodeEnv === "production" && (input.familyId.startsWith("demo_") || input.actorId.startsWith("demo_"))) {
+    throw new Error("Synthetic MCP identities are forbidden in production.");
+  }
+
+  return {
+    familyId: input.familyId,
+    actorId: input.actorId,
+    actorRole: input.actorRole
+  };
+}
