@@ -43,6 +43,47 @@ describe("succession release", () => {
     ).toMatchObject({ allowed: false });
   });
 
+  it("deduplicates guardian approvals before evaluating quorum", () => {
+    expect(
+      evaluateSuccessionRelease({
+        policy,
+        triggerEvidenceVerified: true,
+        triggerSource: "verified_human_process",
+        approvedByPersonIds: ["guardian_1", "guardian_1"],
+        triggerVerifiedAt: "2026-07-12T00:00:00.000Z",
+        now: new Date("2026-07-20T00:00:00.000Z")
+      })
+    ).toMatchObject({ allowed: false });
+  });
+
+  it("fails closed when the trigger verification timestamp is invalid", () => {
+    expect(
+      evaluateSuccessionRelease({
+        policy,
+        triggerEvidenceVerified: true,
+        triggerSource: "verified_human_process",
+        approvedByPersonIds: ["guardian_1", "guardian_2"],
+        triggerVerifiedAt: "not-a-date",
+        now: new Date("2026-07-20T00:00:00.000Z")
+      })
+    ).toMatchObject({ allowed: false });
+  });
+
+  it("rejects ambiguous, timezone-less, and future trigger timestamps", () => {
+    for (const triggerVerifiedAt of ["2026-07-12", "2026-07-12T00:00:00", "2026-07-21T00:00:00.000Z"]) {
+      expect(
+        evaluateSuccessionRelease({
+          policy,
+          triggerEvidenceVerified: true,
+          triggerSource: "verified_human_process",
+          approvedByPersonIds: ["guardian_1", "guardian_2"],
+          triggerVerifiedAt,
+          now: new Date("2026-07-20T00:00:00.000Z")
+        })
+      ).toMatchObject({ allowed: false });
+    }
+  });
+
   it("requires the cooling period", () => {
     expect(
       evaluateSuccessionRelease({

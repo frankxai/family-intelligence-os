@@ -80,8 +80,35 @@ describe("evaluatePolicy", () => {
         actionClass: "publish",
         sensitivity: "critical",
         targetCircle: "public_archive",
+        containsChildData: false,
         livingPersonIds: ["person_1", "person_2"],
         activePublicConsentPersonIds: ["person_1"]
+      })
+    ).toMatchObject({ allowed: false, confirmationMode: "blocked" });
+  });
+
+  it("fails closed when publication child or living-person review inputs are omitted", () => {
+    expect(
+      evaluatePolicy({
+        ...base,
+        actorRole: "family_steward",
+        actionClass: "publish",
+        sensitivity: "critical",
+        targetCircle: "public_archive",
+        livingPersonIds: [],
+        activePublicConsentPersonIds: []
+      })
+    ).toMatchObject({ allowed: false, confirmationMode: "blocked" });
+
+    expect(
+      evaluatePolicy({
+        ...base,
+        actorRole: "family_steward",
+        actionClass: "publish",
+        sensitivity: "critical",
+        targetCircle: "public_archive",
+        containsChildData: false,
+        activePublicConsentPersonIds: []
       })
     ).toMatchObject({ allowed: false, confirmationMode: "blocked" });
   });
@@ -108,6 +135,7 @@ describe("evaluatePolicy", () => {
         actionClass: "publish",
         sensitivity: "critical",
         targetCircle: "public_archive",
+        containsChildData: false,
         livingPersonIds: ["person_1"],
         activePublicConsentPersonIds: ["person_1"]
       })

@@ -38,7 +38,15 @@ export function evaluateSuccessionRelease(input: {
   if (guardianApprovals.size < input.policy.quorum) {
     return { allowed: false, reason: "Guardian quorum is not satisfied." };
   }
-  const coolingEndsAt = new Date(input.triggerVerifiedAt).getTime() + input.policy.coolingPeriodHours * 60 * 60 * 1000;
-  if (now.getTime() < coolingEndsAt) return { allowed: false, reason: "Cooling period is still active." };
+  const strictInstantPattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?(?:Z|[+-]\d{2}:\d{2})$/;
+  const triggerVerifiedAt = strictInstantPattern.test(input.triggerVerifiedAt)
+    ? Date.parse(input.triggerVerifiedAt)
+    : Number.NaN;
+  const nowTime = now.getTime();
+  if (!Number.isFinite(triggerVerifiedAt) || !Number.isFinite(nowTime) || triggerVerifiedAt > nowTime) {
+    return { allowed: false, reason: "Trigger verification time is invalid." };
+  }
+  const coolingEndsAt = triggerVerifiedAt + input.policy.coolingPeriodHours * 60 * 60 * 1000;
+  if (nowTime < coolingEndsAt) return { allowed: false, reason: "Cooling period is still active." };
   return { allowed: true, reason: "Verified trigger, guardian quorum, and cooling period pass." };
 }

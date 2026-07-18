@@ -1,6 +1,27 @@
 import type { ActionClass, FamilyCircle, FamilyPolicyDecision, FamilyRole, Sensitivity } from "@family/core";
 import { actionClasses, sensitivities } from "@family/core";
 
+export {
+  admitTrustedTransition,
+  hasVerifiedTransitionReceipt,
+  transitionKinds,
+  type CommunityActivationBinding,
+  type DeaccessionAuthorizationBinding,
+  type FederationTransferBinding,
+  type JurisdictionActivationBinding,
+  type TransitionBinding,
+  type TransitionKind,
+  type TrustedTransitionReceipt,
+  type VerifiedTransitionReceiptSet
+} from "./trusted-transitions";
+
+export {
+  consumeVerifiedAgentAuthorization,
+  type AgentAuthorizationExpectation,
+  type TrustedAgentAuthorizationReceipt,
+  type VerifiedAgentAuthorizationContext
+} from "./trusted-agent-authorization";
+
 export type PolicyInput = {
   familyId: string;
   actorId: string;
@@ -123,11 +144,14 @@ export function evaluatePolicy(input: PolicyInput): FamilyPolicyDecision {
     if (input.targetCircle !== "public_archive") {
       return blocked("Publication actions require the explicit public archive target.");
     }
-    if (input.containsChildData) {
-      return blocked("Child data cannot be published.");
+    if (input.containsChildData !== false) {
+      return blocked("Publication requires an explicit child-data determination; child data cannot be published.");
     }
-    const livingPeople = new Set(input.livingPersonIds ?? []);
-    const consentedPeople = new Set(input.activePublicConsentPersonIds ?? []);
+    if (!input.livingPersonIds || !input.activePublicConsentPersonIds) {
+      return blocked("Publication requires explicit living-person impact and consent-review inputs.");
+    }
+    const livingPeople = new Set(input.livingPersonIds);
+    const consentedPeople = new Set(input.activePublicConsentPersonIds);
     if ([...livingPeople].some((personId) => !consentedPeople.has(personId))) {
       return blocked("Every affected living person requires active purpose-specific publication consent.");
     }

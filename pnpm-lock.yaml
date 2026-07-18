@@ -162,7 +162,11 @@ importers:
         specifier: ^4.2.0
         version: 4.4.3
 
-  packages/family-config: {}
+  packages/family-config:
+    dependencies:
+      '@family/security':
+        specifier: workspace:*
+        version: link:../family-security
 
   packages/family-connectors:
     dependencies:
@@ -203,6 +207,15 @@ importers:
       '@family/core':
         specifier: workspace:*
         version: link:../family-core
+      zod:
+        specifier: ^4.2.0
+        version: 4.4.3
+
+  packages/family-jurisdiction:
+    dependencies:
+      '@family/security':
+        specifier: workspace:*
+        version: link:../family-security
       zod:
         specifier: ^4.2.0
         version: 4.4.3
