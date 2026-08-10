@@ -1,0 +1,15 @@
+{
+  "name": "Family Intelligence Portal",
+  "description": "A German-first, privacy-gated family knowledge and continuity portal.",
+  "framework": "nextjs",
+  "repositoryRoot": ".",
+  "application": "apps/web",
+  "defaultLocale": "de",
+  "privacyDefault": "locked",
+  "requiredHumanGates": [
+    "claim_acceptance",
+    "living_person_publication",
+    "external_contact",
+    "succession_release"
+  ]
+}

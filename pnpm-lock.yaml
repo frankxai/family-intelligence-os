@@ -80,6 +80,9 @@ importers:
       '@family/audit':
         specifier: workspace:*
         version: link:../../packages/family-audit
+      '@family/auth':
+        specifier: workspace:*
+        version: link:../../packages/family-auth
       '@family/connectors':
         specifier: workspace:*
         version: link:../../packages/family-connectors
@@ -98,21 +101,51 @@ importers:
       '@family/audit':
         specifier: workspace:*
         version: link:../../packages/family-audit
+      '@family/auth':
+        specifier: workspace:*
+        version: link:../../packages/family-auth
+      '@family/claims':
+        specifier: workspace:*
+        version: link:../../packages/family-claims
       '@family/connectors':
         specifier: workspace:*
         version: link:../../packages/family-connectors
+      '@family/consent':
+        specifier: workspace:*
+        version: link:../../packages/family-consent
       '@family/core':
         specifier: workspace:*
         version: link:../../packages/family-core
+      '@family/evidence':
+        specifier: workspace:*
+        version: link:../../packages/family-evidence
       '@family/security':
         specifier: workspace:*
         version: link:../../packages/family-security
+      '@family/succession':
+        specifier: workspace:*
+        version: link:../../packages/family-succession
+      lucide-react:
+        specifier: ^0.561.0
+        version: 0.561.0(react@19.2.7)
+      next:
+        specifier: ^16.1.6
+        version: 16.2.9(@playwright/test@1.61.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      react:
+        specifier: ^19.2.4
+        version: 19.2.7
+      react-dom:
+        specifier: ^19.2.4
+        version: 19.2.7(react@19.2.7)
 
   packages/family-audit:
     dependencies:
       '@family/core':
         specifier: workspace:*
         version: link:../family-core
+      drizzle-orm:
+        specifier: ^0.45.2
+        version: 0.45.2(postgres@3.4.9)
 
   packages/family-auth:
     dependencies:
@@ -120,7 +153,20 @@ importers:
         specifier: workspace:*
         version: link:../family-core
 
-  packages/family-config: {}
+  packages/family-claims:
+    dependencies:
+      '@family/core':
+        specifier: workspace:*
+        version: link:../family-core
+      zod:
+        specifier: ^4.2.0
+        version: 4.4.3
+
+  packages/family-config:
+    dependencies:
+      '@family/security':
+        specifier: workspace:*
+        version: link:../family-security
 
   packages/family-connectors:
     dependencies:
@@ -128,7 +174,51 @@ importers:
         specifier: workspace:*
         version: link:../family-core
 
+  packages/family-consent:
+    dependencies:
+      '@family/core':
+        specifier: workspace:*
+        version: link:../family-core
+      zod:
+        specifier: ^4.2.0
+        version: 4.4.3
+
   packages/family-core: {}
+
+  packages/family-evidence:
+    dependencies:
+      zod:
+        specifier: ^4.2.0
+        version: 4.4.3
+
+  packages/family-export:
+    dependencies:
+      '@family/core':
+        specifier: workspace:*
+        version: link:../family-core
+      zod:
+        specifier: ^4.2.0
+        version: 4.4.3
+
+  packages/family-gedcom: {}
+
+  packages/family-intake:
+    dependencies:
+      '@family/core':
+        specifier: workspace:*
+        version: link:../family-core
+      zod:
+        specifier: ^4.2.0
+        version: 4.4.3
+
+  packages/family-jurisdiction:
+    dependencies:
+      '@family/security':
+        specifier: workspace:*
+        version: link:../family-security
+      zod:
+        specifier: ^4.2.0
+        version: 4.4.3
 
   packages/family-mcp:
     dependencies:
@@ -150,6 +240,12 @@ importers:
       '@family/core':
         specifier: workspace:*
         version: link:../family-core
+
+  packages/family-succession:
+    dependencies:
+      zod:
+        specifier: ^4.2.0
+        version: 4.4.3
 
   packages/family-ui: {}
 

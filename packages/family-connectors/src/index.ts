@@ -14,10 +14,26 @@ export type ConnectorCategory =
   | "vault"
   | "knowledgebase";
 
+export const connectorActionClasses = [
+  "read",
+  "write",
+  "share",
+  "delete",
+  "export",
+  "finance",
+  "legal",
+  "medical",
+  "credential",
+  "child_data",
+  "admin"
+] as const satisfies readonly ActionClass[];
+
+export type ConnectorActionClass = (typeof connectorActionClasses)[number];
+
 export type ConnectorCapability = {
   id: string;
   label: string;
-  actionClass: ActionClass;
+  actionClass: ConnectorActionClass;
   sensitivity: Sensitivity;
   write: boolean;
   destructive: boolean;
@@ -41,7 +57,7 @@ export type FamilyConnector = {
 export const connectorCapabilitySchema = z.object({
   id: z.string().min(1),
   label: z.string().min(1),
-  actionClass: z.enum(["read", "write", "share", "delete", "export", "finance", "legal", "medical", "credential", "child_data", "admin"]),
+  actionClass: z.enum(connectorActionClasses),
   sensitivity: z.enum(["low", "medium", "high", "critical"]),
   write: z.boolean(),
   destructive: z.boolean(),
@@ -313,4 +329,3 @@ export function createStubConnector(manifest: ConnectorManifest): FamilyConnecto
 }
 
 export const stubConnectors = connectorManifests.map(createStubConnector);
-

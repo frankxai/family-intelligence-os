@@ -11,6 +11,9 @@
     "build": "tsc --noEmit",
     "lint": "tsc --noEmit",
     "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@family/security": "workspace:*"
   }
 }
 

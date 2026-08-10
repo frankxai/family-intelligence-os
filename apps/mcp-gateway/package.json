@@ -11,10 +11,10 @@
   },
   "dependencies": {
     "@family/audit": "workspace:*",
+    "@family/auth": "workspace:*",
     "@family/connectors": "workspace:*",
     "@family/core": "workspace:*",
     "@family/mcp": "workspace:*",
     "@family/security": "workspace:*"
   }
 }
-

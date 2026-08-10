@@ -13,7 +13,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@family/core": "workspace:*"
+    "@family/core": "workspace:*",
+    "drizzle-orm": "^0.45.2"
   }
 }
-

@@ -1,6 +1,10 @@
 export type FamilyRole =
   | "family_owner"
   | "family_admin"
+  | "family_steward"
+  | "branch_steward"
+  | "continuity_guardian"
+  | "independent_reviewer"
   | "adult_member"
   | "teen_member"
   | "child_member"
@@ -16,6 +20,12 @@ export type ActionClass =
   | "read"
   | "write"
   | "share"
+  | "accept_claim"
+  | "merge_identity"
+  | "publish"
+  | "contact_external"
+  | "release_access"
+  | "verify_death"
   | "delete"
   | "export"
   | "finance"
@@ -34,6 +44,15 @@ export type MemoryScope =
   | "extended_family"
   | "trusted_advisor"
   | "public";
+
+export type FamilyCircle =
+  | "self"
+  | "household"
+  | "core_circle"
+  | "extended_family"
+  | "descendants_guardianship"
+  | "trusted_advisors"
+  | "public_archive";
 
 export type ContactFieldKind =
   | "preferred_name"
@@ -156,6 +175,10 @@ export type GuardianAgentProfile = {
 export const familyRoles: FamilyRole[] = [
   "family_owner",
   "family_admin",
+  "family_steward",
+  "branch_steward",
+  "continuity_guardian",
+  "independent_reviewer",
   "adult_member",
   "teen_member",
   "child_member",
@@ -172,6 +195,12 @@ export const actionClasses: ActionClass[] = [
   "read",
   "write",
   "share",
+  "accept_claim",
+  "merge_identity",
+  "publish",
+  "contact_external",
+  "release_access",
+  "verify_death",
   "delete",
   "export",
   "finance",
@@ -190,6 +219,16 @@ export const memoryScopes: MemoryScope[] = [
   "trusted_advisor",
   "public"
 ];
+
+export const familyCircles = [
+  "self",
+  "household",
+  "core_circle",
+  "extended_family",
+  "descendants_guardianship",
+  "trusted_advisors",
+  "public_archive"
+] as const satisfies readonly FamilyCircle[];
 
 export const guardianAgentProfiles: GuardianAgentProfile[] = [
   {

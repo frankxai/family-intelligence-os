@@ -2,4 +2,15 @@ export const deploymentModes = ["local_sovereign_node", "hybrid_sovereign", "hos
 
 export const defaultDeploymentMode = "hybrid_sovereign";
 
-export { agentPacks, type AgentPackManifest } from "./agent-packs";
+export {
+  agentActions,
+  agentPacks,
+  evaluateAgentAction,
+  familyAgentManifests,
+  getAgentManifest,
+  type AgentAction,
+  type AgentActionAuthorizationInput,
+  type AgentPackManifest,
+  type AgentScope,
+  type FamilyAgentManifest
+} from "./agent-packs";

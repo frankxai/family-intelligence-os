@@ -1,0 +1,33 @@
+{
+  "manifest_version": "1",
+  "tenant_id": "fam_synthetic_pilot",
+  "display_label": "Privates Familienportal",
+  "default_locale": "de-DE",
+  "supported_locales": ["de-DE", "en"],
+  "default_scope": "self",
+  "enabled_circles": [
+    "self",
+    "household",
+    "core_circle",
+    "extended_family",
+    "descendants_guardianship",
+    "trusted_advisors"
+  ],
+  "child_policy": {
+    "guardian_required": true,
+    "public_discoverability": false,
+    "age_transition_review": true
+  },
+  "continuity_policy": {
+    "inactivity_release_allowed": false,
+    "human_quorum_required": true,
+    "drill_required": true
+  },
+  "data_residency": {
+    "region": "select-before-production",
+    "encryption_profile": "per-family-envelope-key",
+    "export_profile": "encrypted-full-family-export-v1"
+  },
+  "created_at": "2026-07-13T00:00:00.000Z",
+  "updated_at": "2026-07-13T00:00:00.000Z"
+}
