@@ -35,9 +35,22 @@ describe("family portal access", () => {
         nodeEnv: "production",
         demoEnabled: false,
         authConfigured: true,
-        session: validSession
+        session: validSession,
+        now: new Date("2026-07-12T01:00:00.000Z")
       })
     ).toMatchObject({ mode: "authorized" });
+  });
+
+  it("revalidates the session at the portal authorization decision", () => {
+    expect(
+      resolvePortalAccess({
+        nodeEnv: "production",
+        demoEnabled: false,
+        authConfigured: true,
+        session: validSession,
+        now: new Date("2026-07-12T13:00:00.000Z")
+      })
+    ).toMatchObject({ mode: "locked" });
   });
 
   it("validates a bounded human family session", () => {

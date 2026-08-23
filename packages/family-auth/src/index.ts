@@ -77,12 +77,17 @@ export function resolvePortalAccess(input: {
   nodeEnv: "development" | "test" | "production";
   demoEnabled: boolean;
   authConfigured: boolean;
-  session?: FamilyPortalSession | null;
+  session?: unknown;
+  now?: Date;
 }): PortalAccessState {
-  if (input.authConfigured && input.session) {
+  const session = input.authConfigured
+    ? validateFamilyPortalSession(input.session, input.now)
+    : null;
+
+  if (session) {
     return {
       mode: "authorized",
-      session: input.session,
+      session,
       reason: "Authenticated family-scoped session."
     };
   }
