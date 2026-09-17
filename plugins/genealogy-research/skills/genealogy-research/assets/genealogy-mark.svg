@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">Genealogy Research</title>
+  <desc id="desc">A branching family tree enclosed by an evidence ring.</desc>
+  <rect width="256" height="256" rx="52" fill="#0B3D3A"/>
+  <circle cx="128" cy="128" r="92" fill="none" stroke="#5EEAD4" stroke-width="10" opacity=".92"/>
+  <path d="M128 186v-58m0 18-42-34m42 16 42-42m-84 26v-30m84 4V58" fill="none" stroke="#F0FDFA" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="86" cy="73" r="18" fill="#FBBF24"/>
+  <circle cx="170" cy="49" r="18" fill="#FBBF24"/>
+  <circle cx="128" cy="105" r="18" fill="#FBBF24"/>
+  <circle cx="128" cy="201" r="18" fill="#FBBF24"/>
+</svg>

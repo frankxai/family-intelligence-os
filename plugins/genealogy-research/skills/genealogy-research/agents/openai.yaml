@@ -1,0 +1,10 @@
+interface:
+  display_name: "Genealogy Research"
+  short_description: "Evidence-led family-history research"
+  icon_small: "./assets/genealogy-mark.svg"
+  icon_large: "./assets/genealogy-mark.svg"
+  brand_color: "#0F766E"
+  default_prompt: "Use $genealogy-research to investigate a family-history question with source-aware evidence tracking."
+
+policy:
+  allow_implicit_invocation: true

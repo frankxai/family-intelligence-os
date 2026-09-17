@@ -1,0 +1,45 @@
+{
+  "name": "genealogy-research",
+  "version": "0.1.0+codex.20260823231026",
+  "description": "Evidence-led genealogy research with source verification, DNA guardrails, historical-document analysis, and GEDCOM auditing.",
+  "author": {
+    "name": "FrankX",
+    "url": "https://github.com/frankxai"
+  },
+  "homepage": "https://github.com/frankxai/family-intelligence-os/tree/main/plugins/genealogy-research",
+  "repository": "https://github.com/frankxai/family-intelligence-os",
+  "license": "MIT",
+  "keywords": [
+    "genealogy",
+    "family-history",
+    "historical-records",
+    "gedcom",
+    "evidence"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Genealogy Research",
+    "shortDescription": "Evidence-led family-history investigation",
+    "longDescription": "Plan and conduct defensible family-history research. Separate claims from conclusions, trace every assertion to its provenance, distinguish independent corroboration from duplicate indexes, analyze documents and DNA responsibly, protect living people, and audit GEDCOM files without modifying them.",
+    "developerName": "FrankX",
+    "category": "Productivity",
+    "capabilities": [
+      "Research planning",
+      "Source verification",
+      "Evidence correlation",
+      "Historical-document analysis",
+      "DNA evidence review",
+      "GEDCOM audit",
+      "Privacy review"
+    ],
+    "websiteURL": "https://github.com/frankxai/family-intelligence-os",
+    "defaultPrompt": [
+      "Build a source-led plan for this ancestor question.",
+      "Analyze these records and separate facts from inferences.",
+      "Audit this GEDCOM for structure, links, and privacy risks."
+    ],
+    "brandColor": "#0F766E",
+    "composerIcon": "./skills/genealogy-research/assets/genealogy-mark.svg",
+    "logo": "./skills/genealogy-research/assets/genealogy-mark.svg"
+  }
+}
