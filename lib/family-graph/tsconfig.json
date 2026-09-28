@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "baseUrl": "../..",
+    "paths": {
+      "@family/claims": ["packages/family-claims/src/index.ts"],
+      "@family/consent": ["packages/family-consent/src/index.ts"],
+      "@family/core": ["packages/family-core/src/index.ts"],
+      "@family/evidence": ["packages/family-evidence/src/index.ts"],
+      "@family/export": ["packages/family-export/src/index.ts"],
+      "@family/succession": ["packages/family-succession/src/index.ts"]
+    }
+  },
+  "include": ["**/*.ts"]
+}
