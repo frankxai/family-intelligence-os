@@ -13,6 +13,7 @@
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "test": "vitest run",
+    "test:qr": "tsx --test tests/qr/entry.node.ts",
     "test:e2e": "playwright test",
     "validate:connectors": "vitest run tests/connectors/manifest.test.ts"
   },

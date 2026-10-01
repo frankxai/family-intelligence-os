@@ -1,0 +1,26 @@
+[
+  {
+    "id": "household",
+    "title": "Everyday life",
+    "description": "On the kitchen wall: routines, instructions and household help.",
+    "url": "https://family.example.invalid/q/A123456789012345678901"
+  },
+  {
+    "id": "learning",
+    "title": "Little discoveries",
+    "description": "At the study desk: reviewed learning cards and adult-led exploration.",
+    "url": "https://family.example.invalid/q/B123456789012345678901"
+  },
+  {
+    "id": "values",
+    "title": "What matters to us",
+    "description": "At the family table: your charter, stories and conversation cards.",
+    "url": "https://family.example.invalid/q/C123456789012345678901"
+  },
+  {
+    "id": "documents",
+    "title": "Find the useful thing",
+    "description": "In the document folder: personal sign-in and record-specific access.",
+    "url": "https://family.example.invalid/q/D123456789012345678901"
+  }
+]
