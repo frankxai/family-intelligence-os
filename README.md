@@ -71,6 +71,8 @@ The `@family/auth/qr-entry` policy helper generates opaque 128-bit routing locat
 
 Run `pnpm test:qr` for policy tests. Run `node tests/qr/prototype-smoke.mjs` with a local server and installed Playwright browsers for the synthetic UI smoke test. The optional developer generator uses ReportLab: `python scripts/generate-family-qr-demo.py`.
 
+The [portable Family Layer proposal](docs/family-qr/FAMILY-LAYER.md) and [Starter Kit templates](templates/family-kit/README.md) extend this into curation, offline emergency contacts, configurable deployment profiles, AI-host adapters, NFC and supervised physical experiences. The example configuration is design-only; no connector, device or installable plugin has been activated.
+
 ## Local Commands
 
 ```bash

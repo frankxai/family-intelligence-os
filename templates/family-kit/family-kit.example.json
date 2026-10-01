@@ -1,0 +1,47 @@
+{
+  "kitVersion": "0.1.0",
+  "status": "design_only",
+  "containsPersonalData": false,
+  "profile": "everyday",
+  "profileChoices": ["everyday", "sovereign", "maker_lab"],
+  "privateDeploymentConfigured": false,
+  "configurationIsAuthorization": false,
+  "governance": {
+    "familyStewardReference": "UNCONFIGURED",
+    "consentPolicyReference": "UNCONFIGURED",
+    "membershipAuthorityReference": "UNCONFIGURED",
+    "recoveryOwnerReference": "UNCONFIGURED"
+  },
+  "sources": [
+    {"capability": "approved_knowledge", "adapter": "UNCONFIGURED", "mode": "read_only", "state": "planned"},
+    {"capability": "approved_contacts", "adapter": "UNCONFIGURED", "mode": "read_only", "state": "planned"}
+  ],
+  "interfaces": {
+    "portal": {"state": "planned", "personalSignInRequired": true},
+    "qr": {"state": "planned", "locatorIsCredential": false, "printedDomain": "family.example.invalid"},
+    "nfc": {"state": "disabled", "locatorIsCredential": false},
+    "robot": {"state": "disabled", "deviceAssessmentRequired": true, "generalMotorToolsPermitted": false}
+  },
+  "aiHosts": [
+    {"host": "chatgpt", "state": "disabled", "policyReviewRequired": true, "personalAuthorizationRequired": true},
+    {"host": "claude", "state": "disabled", "policyReviewRequired": true, "consumerMinimumAgeEvidence": {"minimumAge": 18, "checkedOn": "2026-10-01", "source": "https://support.claude.com/en/articles/13117299-minimum-age-requirement-access-restriction"}},
+    {"host": "open_webui", "state": "disabled", "perUserAuthorizationRequired": true, "licenseReviewRequired": true},
+    {"host": "lopap", "state": "unresolved", "exactProductNotVerified": true}
+  ],
+  "privacy": {
+    "rawSecretToolsPermitted": false,
+    "childBiometricProfilingPermitted": false,
+    "crossFamilyTrainingPermitted": false,
+    "sensorRecordingDefault": "off",
+    "publicFamilyRecordsPermitted": false
+  },
+  "continuity": {
+    "offlineContactCard": "planned",
+    "independentExport": "planned",
+    "restoreEvidenceReference": "UNCONFIGURED",
+    "printedCopiesRequireManualReplacement": true,
+    "successionAuthorityReference": "UNCONFIGURED"
+  },
+  "budget": {"currency": "EUR", "ownerReference": "UNCONFIGURED", "monthlyModelLimit": 0, "paidCallsEnabled": false},
+  "publicReadiness": {"fixtureType": "synthetic", "pluginCompatibilityTested": false, "deviceTested": false}
+}
