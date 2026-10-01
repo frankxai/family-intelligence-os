@@ -63,6 +63,16 @@ No real relative names or family records belong in repository fixtures. The UI d
 
 [Deploy the locked template to Vercel](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Ffrankxai%2Ffamily-intelligence-os&project-name=family-intelligence-portal&repository-name=family-intelligence-portal). The clone is intentionally not a production-ready family vault: it stays locked until identity, private storage, scanning, audit persistence, export/restore, and human approval gates are connected.
 
+## Starlight Family QR prototype
+
+`docs/family-qr/PROTOTYPE.html` is a self-contained, synthetic family experience with role views, sourced example answers, values/learning cards, an AI-account register and four inactive printable QR cards. Open the HTML directly; no provider or family data is connected. Cards use `family.example.invalid`, never a live invitation.
+
+The `@family/auth/qr-entry` policy helper generates opaque 128-bit routing locators and requires trusted personal sessions, explicit member grants, current records and child-approved low-sensitivity destinations. It authorizes navigation only. The `/q/[locator]` route remains locked until deployment-owned session, routing, data-authorization and audit adapters exist. See [the architecture and pilot contract](docs/family-qr/ARCHITECTURE.md) and [release evidence](docs/family-qr/RELEASE.md).
+
+Run `pnpm test:qr` for policy tests. Run `node tests/qr/prototype-smoke.mjs` with a local server and installed Playwright browsers for the synthetic UI smoke test. The optional developer generator uses ReportLab: `python scripts/generate-family-qr-demo.py`.
+
+The [portable Family Layer proposal](docs/family-qr/FAMILY-LAYER.md) and [Starter Kit templates](templates/family-kit/README.md) extend this into curation, offline emergency contacts, configurable deployment profiles, AI-host adapters, NFC and supervised physical experiences. The example configuration is design-only; no connector, device or installable plugin has been activated.
+
 ## Local Commands
 
 ```bash

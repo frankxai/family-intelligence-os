@@ -27,5 +27,8 @@ jobs:
           cache: pnpm
       - name: Install
         run: pnpm install --frozen-lockfile
+      - name: QR policy boundaries
+        run: pnpm test:qr
       - name: Build
         run: pnpm build
+
