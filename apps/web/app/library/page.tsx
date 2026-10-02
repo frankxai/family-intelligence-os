@@ -1,71 +1,109 @@
-import { guardianAgentProfiles } from "@family/core";
-
-const hubTypes = [
-  ["Private hub", "A member-owned space for notes, profile, documents, memories, and library drafts."],
-  ["Family hub", "Approved material shared with the household or wider family."],
-  ["Extended-family hub", "Gatherings, reunions, elder support, contact updates, and shared history."],
-  ["Public library", "Redacted and approved artifacts suitable for a public layer such as frankx.ai/library."]
+import Link from "next/link";
+import {
+  BookOpen,
+  Archive,
+  ScrollText,
+  ArrowUpRight,
+  ShieldCheck,
+} from "lucide-react";
+const collections = [
+  {
+    title: "Stories & voices",
+    icon: Archive,
+    description:
+      "Interviews, letters and memories, with the storyteller and original source kept together.",
+    action: "Capture a story",
+    href: "/capture",
+  },
+  {
+    title: "Books & discoveries",
+    icon: BookOpen,
+    description:
+      "Books, scans and research notes with page citations, processing rights and context.",
+    action: "Explore the intake workflow",
+    href: "/workflows",
+  },
+  {
+    title: "Principles & practice",
+    icon: ScrollText,
+    description:
+      "Your family's chosen principles, connected to the stories and experiences that give them meaning.",
+    action: "Explore learning",
+    href: "/learn",
+  },
 ];
-
-const workflows = [
-  "Contact fields keep consent, source, timestamp, verification status, and visibility.",
-  "Private hub entries stay private until the owner submits a contribution.",
-  "Guardian review checks privacy, claims, copyright, child data, elder records, and prompt injection.",
-  "Approved contributions can move to family, extended-family, or public library scope."
-];
-
 export default function LibraryPage() {
   return (
-    <section className="shell page">
-      <div className="eyebrow">Private-first library</div>
-      <h1>Family hubs and agent packs</h1>
-      <p className="hero-copy">
-        Each member can build a private hub and library, then submit approved
-        contributions to the shared family hub or a public library layer such as
-        frankx.ai/library. Guardian review separates private memory from family
-        knowledge and public artifacts.
-      </p>
-      <div className="connector-grid" style={{ marginTop: 24 }}>
-        {hubTypes.map(([title, body]) => (
-          <article className="panel" key={title}>
-            <h2>{title}</h2>
-            <p>{body}</p>
-          </article>
+    <div className="shell page studio-page">
+      <div className="studio-heading">
+        <div>
+          <span className="eyebrow">THE LEGACY LIBRARY</span>
+          <h1>Knowledge worth keeping.</h1>
+          <p>
+            A place for originals, context and the discoveries that connect
+            generations.
+          </p>
+        </div>
+        <Link className="button primary" href="/capture">
+          Begin a collection <ArrowUpRight size={16} />
+        </Link>
+      </div>
+      <div className="studio-banner">
+        <ShieldCheck size={16} />
+        <span>
+          Template collections · 0 records · private archive not connected
+        </span>
+        <Link href="/setup">
+          Set up storage <ArrowUpRight size={14} />
+        </Link>
+      </div>
+      <div className="collection-grid">
+        {collections.map((c) => (
+          <section className="studio-card" key={c.title}>
+            <c.icon size={26} />
+            <h2>{c.title}</h2>
+            <p>{c.description}</p>
+            <span className="pill">STARTER COLLECTION</span>
+            <p>
+              <Link href={c.href} className="text-link">
+                {c.action}
+                <ArrowUpRight size={16} />
+              </Link>
+            </p>
+          </section>
         ))}
       </div>
-      <div className="dashboard-grid" style={{ marginTop: 16 }}>
-        <div className="panel">
-          <h2>Guardian agents</h2>
-          <table className="table">
-            <tbody>
-              {guardianAgentProfiles.map((profile) => (
-                <tr key={profile.id}>
-                  <td>{profile.displayName}</td>
-                  <td className="mono">{profile.defaultScope}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <div className="panel">
-          <h2>Contribution workflow</h2>
-          <ul className="compact-list">
-            {workflows.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
-        </div>
-        <div className="panel">
-          <h2>Safety gate</h2>
-          <p>
-            Research, documentation, food planning, event organizing, elder
-            support, and contact stewardship all pass through scoped memory,
-            source provenance, and explicit approval before anything is shared
-            outside the owner&apos;s private hub.
-          </p>
-          <span className="status warn">review required</span>
+      <div className="section-title">
+        <div>
+          <span className="eyebrow">PRESERVE THE CONTEXT</span>
+          <h2>Every source keeps its story.</h2>
         </div>
       </div>
-    </section>
+      <div className="studio-bottom-grid">
+        <section className="studio-card">
+          <h2>Original → searchable copy → knowledge.</h2>
+          <p>
+            Keep the original intact. Link every transcription, OCR page and
+            extracted claim back to it. Conflicting accounts remain visible for
+            review.
+          </p>
+          <Link href="/graph" className="text-link">
+            See the knowledge model <ArrowUpRight size={16} />
+          </Link>
+        </section>
+        <section className="studio-card">
+          <h2>Sharing begins with a decision.</h2>
+          <p>
+            Member, family and advisor collections need separate grants.
+            Publication requires a separately reviewed, sanitized copy. A
+            source's presence in the library does not grant permission to share
+            it.
+          </p>
+          <Link href="/setup" className="text-link">
+            Review the foundation <ArrowUpRight size={16} />
+          </Link>
+        </section>
+      </div>
+    </div>
   );
 }

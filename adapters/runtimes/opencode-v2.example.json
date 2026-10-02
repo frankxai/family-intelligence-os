@@ -1,0 +1,26 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "servers": {
+      "family": {
+        "type": "local",
+        "command": [
+          "pnpm",
+          "--filter",
+          "@family/mcp-gateway",
+          "exec",
+          "tsx",
+          "src/server.ts"
+        ],
+        "enabled": false
+      }
+    }
+  },
+  "permissions": [
+    {
+      "action": "family_*",
+      "resource": "*",
+      "effect": "deny"
+    }
+  ]
+}

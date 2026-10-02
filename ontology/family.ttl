@@ -1,0 +1,21 @@
+@prefix fi: <urn:family-intelligence:ontology:> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+
+fi:Artifact a owl:Class ; rdfs:subClassOf prov:Entity .
+fi:Testimony a owl:Class ; rdfs:subClassOf prov:Entity .
+fi:Claim a owl:Class ; rdfs:subClassOf prov:Entity .
+fi:Principle a owl:Class ; rdfs:subClassOf prov:Entity .
+fi:Lesson a owl:Class ; rdfs:subClassOf prov:Entity .
+fi:Extraction a owl:Class ; rdfs:subClassOf prov:Activity .
+fi:HumanReview a owl:Class ; rdfs:subClassOf prov:Activity .
+fi:AccountableActor a owl:Class ; rdfs:subClassOf prov:Agent .
+fi:candidateSubject a owl:ObjectProperty ; rdfs:domain fi:Claim .
+fi:candidateObject a owl:ObjectProperty ; rdfs:domain fi:Claim .
+fi:evidence a owl:ObjectProperty ; rdfs:subPropertyOf prov:wasDerivedFrom .
+fi:teaches a owl:ObjectProperty ; rdfs:domain fi:Lesson .
+fi:tenantRef a owl:DatatypeProperty .
+fi:scope a owl:DatatypeProperty .
+fi:reviewState a owl:DatatypeProperty .
+fi:principleAuthorRef a owl:DatatypeProperty .

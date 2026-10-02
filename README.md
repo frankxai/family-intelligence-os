@@ -61,7 +61,7 @@ No real relative names or family records belong in repository fixtures. The UI d
 - `templates/private-family-pilot`: a policy-only German pilot manifest with no personal records.
 - `vercel.json`: one-path monorepo build for `@family/web`.
 
-[Deploy the locked template to Vercel](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Ffrankxai%2Ffamily-intelligence-os&project-name=family-intelligence-portal&repository-name=family-intelligence-portal). The clone is intentionally not a production-ready family vault: it stays locked until identity, private storage, scanning, audit persistence, export/restore, and human approval gates are connected.
+[Deploy the locked template to Vercel](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Ffrankxai%2Ffamily-intelligence-os%2Ftree%2Fcodex%2Ffamily-intelligence-2026-10-02&project-name=family-intelligence-portal&repository-name=family-intelligence-portal). The clone is intentionally not a production-ready family vault: it stays locked until identity, private storage, scanning, audit persistence, export/restore, and human approval gates are connected.
 
 ## Local Commands
 
@@ -76,3 +76,7 @@ pnpm --filter @family/web dev
 ## Deployment
 
 The first deployment target is a Vercel preview for `apps/web`. Production promotion requires authentication, privacy, restore, accessibility, and audit review. See `templates/vercel-family-portal/README.md`.
+
+## Family legacy workspace (2026-10-02)
+
+The dashboard now connects capture, source-linked graph concepts, next-generation learning, workflow packs and runtime setup. [Architecture and actual maturity](docs/sovereign-family-workspace.md) · [Library OS bridge](docs/library-bridge.md) · [Ontology](docs/ontology-engineering.md) · [Portable plugin](plugins/family-intelligence/) · [Railway](infra/railway/README.md). Capture downloads a local private draft; private vault persistence and runtime connectors are not yet activated.
