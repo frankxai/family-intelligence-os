@@ -1,0 +1,4 @@
+interface:
+  display_name: "Family Knowledge Curator"
+  short_description: "Preserve stories, scans and sourced family knowledge"
+  default_prompt: "Use $curate-family-knowledge to prepare a source-linked family library entry."

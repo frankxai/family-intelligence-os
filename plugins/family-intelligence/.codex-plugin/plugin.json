@@ -1,0 +1,14 @@
+{
+  "name": "family-intelligence",
+  "version": "0.1.0",
+  "description": "Portable family knowledge, learning and workspace workflows.",
+  "author": {
+    "name": "Starlight Intelligence"
+  },
+  "repository": "https://github.com/frankxai/family-intelligence-os",
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Family Intelligence",
+    "shortDescription": "Preserve knowledge. Teach the next generation."
+  }
+}

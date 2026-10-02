@@ -1,0 +1,290 @@
+{
+  "schemaVersion": "1.0",
+  "pack": "family-intelligence",
+  "maturity": "definitions",
+  "enabled": false,
+  "workflows": [
+    {
+      "schemaVersion": "1.0",
+      "id": "capture-memory",
+      "version": "0.1.0",
+      "maturity": "definition",
+      "enabled": false,
+      "trigger": "authorized_manual",
+      "requiresTrustedTenant": true,
+      "requiresOperationAuthorization": true,
+      "defaultScope": "private",
+      "allowedOutputs": [
+        "draft",
+        "review_packet"
+      ],
+      "humanOnlyActions": [
+        "accept_claim",
+        "merge_identity",
+        "publish",
+        "contact_external",
+        "export",
+        "release_access",
+        "delete"
+      ],
+      "limits": {
+        "maxSourceItems": 20,
+        "maxModelCalls": 4,
+        "maxRetries": 1,
+        "maxRunSeconds": 600,
+        "maxEstimatedCostUsd": 1
+      },
+      "receiptFields": [
+        "runId",
+        "tenantId",
+        "actorId",
+        "purpose",
+        "policyVersion",
+        "sourceRefs",
+        "processor",
+        "cost",
+        "status",
+        "resultRefs",
+        "reviewRefs",
+        "idempotencyKey"
+      ],
+      "failurePolicy": "stop_and_prepare_review",
+      "revocationPolicy": "cancel_and_suppress_derivatives"
+    },
+    {
+      "schemaVersion": "1.0",
+      "id": "scan-library",
+      "version": "0.1.0",
+      "maturity": "definition",
+      "enabled": false,
+      "trigger": "authorized_manual",
+      "requiresTrustedTenant": true,
+      "requiresOperationAuthorization": true,
+      "defaultScope": "private",
+      "allowedOutputs": [
+        "draft",
+        "review_packet"
+      ],
+      "humanOnlyActions": [
+        "accept_claim",
+        "merge_identity",
+        "publish",
+        "contact_external",
+        "export",
+        "release_access",
+        "delete"
+      ],
+      "limits": {
+        "maxSourceItems": 20,
+        "maxModelCalls": 4,
+        "maxRetries": 1,
+        "maxRunSeconds": 600,
+        "maxEstimatedCostUsd": 1
+      },
+      "receiptFields": [
+        "runId",
+        "tenantId",
+        "actorId",
+        "purpose",
+        "policyVersion",
+        "sourceRefs",
+        "processor",
+        "cost",
+        "status",
+        "resultRefs",
+        "reviewRefs",
+        "idempotencyKey"
+      ],
+      "failurePolicy": "stop_and_prepare_review",
+      "revocationPolicy": "cancel_and_suppress_derivatives"
+    },
+    {
+      "schemaVersion": "1.0",
+      "id": "weekly-review",
+      "version": "0.1.0",
+      "maturity": "definition",
+      "enabled": false,
+      "trigger": "approved_schedule",
+      "requiresTrustedTenant": true,
+      "requiresOperationAuthorization": true,
+      "defaultScope": "private",
+      "allowedOutputs": [
+        "draft",
+        "review_packet"
+      ],
+      "humanOnlyActions": [
+        "accept_claim",
+        "merge_identity",
+        "publish",
+        "contact_external",
+        "export",
+        "release_access",
+        "delete"
+      ],
+      "limits": {
+        "maxSourceItems": 20,
+        "maxModelCalls": 4,
+        "maxRetries": 1,
+        "maxRunSeconds": 600,
+        "maxEstimatedCostUsd": 1
+      },
+      "receiptFields": [
+        "runId",
+        "tenantId",
+        "actorId",
+        "purpose",
+        "policyVersion",
+        "sourceRefs",
+        "processor",
+        "cost",
+        "status",
+        "resultRefs",
+        "reviewRefs",
+        "idempotencyKey"
+      ],
+      "failurePolicy": "stop_and_prepare_review",
+      "revocationPolicy": "cancel_and_suppress_derivatives"
+    },
+    {
+      "schemaVersion": "1.0",
+      "id": "learning-path",
+      "version": "0.1.0",
+      "maturity": "definition",
+      "enabled": false,
+      "trigger": "authorized_manual",
+      "requiresTrustedTenant": true,
+      "requiresOperationAuthorization": true,
+      "defaultScope": "private",
+      "allowedOutputs": [
+        "draft",
+        "review_packet"
+      ],
+      "humanOnlyActions": [
+        "accept_claim",
+        "merge_identity",
+        "publish",
+        "contact_external",
+        "export",
+        "release_access",
+        "delete"
+      ],
+      "limits": {
+        "maxSourceItems": 20,
+        "maxModelCalls": 4,
+        "maxRetries": 1,
+        "maxRunSeconds": 600,
+        "maxEstimatedCostUsd": 1
+      },
+      "receiptFields": [
+        "runId",
+        "tenantId",
+        "actorId",
+        "purpose",
+        "policyVersion",
+        "sourceRefs",
+        "processor",
+        "cost",
+        "status",
+        "resultRefs",
+        "reviewRefs",
+        "idempotencyKey"
+      ],
+      "failurePolicy": "stop_and_prepare_review",
+      "revocationPolicy": "cancel_and_suppress_derivatives"
+    },
+    {
+      "schemaVersion": "1.0",
+      "id": "research-family",
+      "version": "0.1.0",
+      "maturity": "definition",
+      "enabled": false,
+      "trigger": "authorized_manual",
+      "requiresTrustedTenant": true,
+      "requiresOperationAuthorization": true,
+      "defaultScope": "private",
+      "allowedOutputs": [
+        "draft",
+        "review_packet"
+      ],
+      "humanOnlyActions": [
+        "accept_claim",
+        "merge_identity",
+        "publish",
+        "contact_external",
+        "export",
+        "release_access",
+        "delete"
+      ],
+      "limits": {
+        "maxSourceItems": 20,
+        "maxModelCalls": 4,
+        "maxRetries": 1,
+        "maxRunSeconds": 600,
+        "maxEstimatedCostUsd": 1
+      },
+      "receiptFields": [
+        "runId",
+        "tenantId",
+        "actorId",
+        "purpose",
+        "policyVersion",
+        "sourceRefs",
+        "processor",
+        "cost",
+        "status",
+        "resultRefs",
+        "reviewRefs",
+        "idempotencyKey"
+      ],
+      "failurePolicy": "stop_and_prepare_review",
+      "revocationPolicy": "cancel_and_suppress_derivatives"
+    },
+    {
+      "schemaVersion": "1.0",
+      "id": "continuity-drill",
+      "version": "0.1.0",
+      "maturity": "definition",
+      "enabled": false,
+      "trigger": "authorized_manual",
+      "requiresTrustedTenant": true,
+      "requiresOperationAuthorization": true,
+      "defaultScope": "private",
+      "allowedOutputs": [
+        "draft",
+        "review_packet"
+      ],
+      "humanOnlyActions": [
+        "accept_claim",
+        "merge_identity",
+        "publish",
+        "contact_external",
+        "export",
+        "release_access",
+        "delete"
+      ],
+      "limits": {
+        "maxSourceItems": 20,
+        "maxModelCalls": 4,
+        "maxRetries": 1,
+        "maxRunSeconds": 600,
+        "maxEstimatedCostUsd": 1
+      },
+      "receiptFields": [
+        "runId",
+        "tenantId",
+        "actorId",
+        "purpose",
+        "policyVersion",
+        "sourceRefs",
+        "processor",
+        "cost",
+        "status",
+        "resultRefs",
+        "reviewRefs",
+        "idempotencyKey"
+      ],
+      "failurePolicy": "stop_and_prepare_review",
+      "revocationPolicy": "cancel_and_suppress_derivatives"
+    }
+  ]
+}

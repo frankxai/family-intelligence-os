@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  output: "standalone",
+  outputFileTracingRoot: process.cwd().replace(/\/apps\/web$/, ""),
   transpilePackages: [
     "@family/audit",
     "@family/auth",

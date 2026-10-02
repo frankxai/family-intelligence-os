@@ -1,0 +1,10 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "family-intelligence",
+  "version": "0.1.0",
+  "description": "Private-first family curation, learning and workspace operating skills. Skills-only pack; no private gateway connected.",
+  "author": {
+    "name": "Starlight Intelligence"
+  },
+  "repository": "https://github.com/frankxai/family-intelligence-os"
+}

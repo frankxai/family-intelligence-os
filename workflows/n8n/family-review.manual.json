@@ -1,0 +1,70 @@
+{
+  "name": "Family review — manual planning starter",
+  "active": false,
+  "nodes": [
+    {
+      "id": "manual",
+      "name": "Start review",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "id": "draft",
+      "name": "Prepare review checklist",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        490,
+        300
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "state",
+              "name": "status",
+              "type": "string",
+              "value": "draft_only"
+            },
+            {
+              "id": "scope",
+              "name": "scope",
+              "type": "string",
+              "value": "no_private_data_connected"
+            },
+            {
+              "id": "agenda",
+              "name": "agenda",
+              "type": "string",
+              "value": "Choose approved sources; review stale claims; confirm sharing decisions; check recovery readiness."
+            }
+          ]
+        },
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Start review": {
+      "main": [
+        [
+          {
+            "node": "Prepare review checklist",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "none",
+    "saveDataErrorExecution": "none"
+  },
+  "pinData": {}
+}

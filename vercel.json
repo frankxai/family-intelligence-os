@@ -6,6 +6,9 @@
   "devCommand": "pnpm --filter @family/web dev",
   "outputDirectory": "apps/web/.next",
   "git": {
-    "deploymentEnabled": false
+    "deploymentEnabled": {
+      "**": false,
+      "codex/family-intelligence-2026-10-02": true
+    }
   }
 }

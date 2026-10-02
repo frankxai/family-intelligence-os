@@ -5,17 +5,22 @@ export default defineConfig({
   timeout: 30_000,
   use: {
     baseURL: process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:3000",
-    trace: "on-first-retry"
+    launchOptions: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE
+      ? {
+          executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE,
+          args: process.env.PLAYWRIGHT_CHROMIUM_ARGS?.split(",") ?? ["--no-sandbox"],
+        }
+      : {},
+    trace: "on-first-retry",
   },
   projects: [
     { name: "chromium", use: { ...devices["Desktop Chrome"] } },
-    { name: "mobile", use: { ...devices["Pixel 7"] } }
+    { name: "mobile", use: { ...devices["Pixel 7"] } },
   ],
   webServer: {
     command: "pnpm --filter @family/web dev --hostname 127.0.0.1 --port 3000",
     url: "http://127.0.0.1:3000",
     reuseExistingServer: !process.env.CI,
-    timeout: 120_000
-  }
+    timeout: 120_000,
+  },
 });
-

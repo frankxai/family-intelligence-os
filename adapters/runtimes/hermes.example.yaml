@@ -1,0 +1,10 @@
+# Configuration example; activate only after sovereign gateway authorization is implemented.
+mcp_servers:
+  family:
+    enabled: false
+    command: pnpm
+    args: ["--filter", "@family/mcp-gateway", "exec", "tsx", "src/server.ts"]
+    tools:
+      include: ["search_family_docs", "get_household_tasks"]
+      resources: false
+      prompts: false

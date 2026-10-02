@@ -1,0 +1,4 @@
+interface:
+  display_name: "Family Workspace Operator"
+  short_description: "Configure portable family AI with scoped permissions"
+  default_prompt: "Use $operate-family-workspace to configure and verify a private family AI workspace."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Family Learning Guide"
+  short_description: "Turn approved family wisdom into learning activities"
+  default_prompt: "Use $guide-family-learning to draft a guardian-reviewed learning activity."
