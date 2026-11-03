@@ -4,10 +4,20 @@
   "compatibility_date": "2026-10-01",
   "workers_dev": true,
   "preview_urls": false,
-  "limits": {"cpu_ms":50},
-  "observability": {"enabled":false},
-  "vars": {"ALLOWED_ORIGINS":"https://starlight-kitchen.vercel.app,https://starlight-kitchen.frankxai.workers.dev"},
-  "d1_databases": [{"binding":"DB","database_name":"starlight-kitchen","database_id":"f0174410-8c01-4a37-831d-41c45b025189"}],
-  "r2_buckets": [{"binding":"MEDIA","bucket_name":"starlight-media-private"}],
-  "ai": {"binding":"AI"}
+  "limits": { "cpu_ms": 50 },
+  "observability": { "enabled": false },
+  "vars": {
+    "ALLOWED_ORIGINS": "https://starlight-kitchen.vercel.app,https://starlight-kitchen.frankxai.workers.dev",
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "starlight-kitchen",
+      "database_id": "f0174410-8c01-4a37-831d-41c45b025189",
+    },
+  ],
+  "r2_buckets": [
+    { "binding": "MEDIA", "bucket_name": "starlight-media-private" },
+  ],
+  "ai": { "binding": "AI" },
 }

@@ -2,19 +2,61 @@
   "version": 2,
   "buildCommand": "",
   "outputDirectory": "public",
-  "headers": [{"source":"/(.*)","headers":[
-    {"key":"Cache-Control","value":"no-store"},
-    {"key":"X-Content-Type-Options","value":"nosniff"},
-    {"key":"X-Frame-Options","value":"DENY"},
-    {"key":"Referrer-Policy","value":"no-referrer"},
-    {"key":"Content-Security-Policy","value":"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob: data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"}
-  ]}],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "no-referrer"
+        },
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob: data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"
+        }
+      ]
+    }
+  ],
   "rewrites": [
-    {"source":"/api/:path*","destination":"https://starlight-kitchen.frankxai.workers.dev/api/:path*"},
-    {"source":"/photo/:path*","destination":"https://starlight-kitchen.frankxai.workers.dev/photo/:path*"},
-    {"source":"/public-photo/:path*","destination":"https://starlight-kitchen.frankxai.workers.dev/public-photo/:path*"},
-    {"source":"/mcp","destination":"https://starlight-kitchen.frankxai.workers.dev/mcp"},
-    {"source":"/start","destination":"/index.html"},
-    {"source":"/blog/:path*","destination":"/index.html"}
+    {
+      "source": "/r/:path*",
+      "destination": "https://starlight-kitchen.frankxai.workers.dev/r/:path*"
+    },
+    {
+      "source": "/api/:path*",
+      "destination": "https://starlight-kitchen.frankxai.workers.dev/api/:path*"
+    },
+    {
+      "source": "/photo/:path*",
+      "destination": "https://starlight-kitchen.frankxai.workers.dev/photo/:path*"
+    },
+    {
+      "source": "/public-photo/:path*",
+      "destination": "https://starlight-kitchen.frankxai.workers.dev/public-photo/:path*"
+    },
+    {
+      "source": "/mcp",
+      "destination": "https://starlight-kitchen.frankxai.workers.dev/mcp"
+    },
+    {
+      "source": "/start",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/blog/:path*",
+      "destination": "/index.html"
+    }
   ]
 }

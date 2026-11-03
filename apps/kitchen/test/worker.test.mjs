@@ -1,32 +1,604 @@
-import {test,beforeEach} from 'node:test';
-import assert from 'node:assert/strict';
-import {DatabaseSync} from 'node:sqlite';
-import {readFileSync} from 'node:fs';
-import worker,{hash,nutrition,validateRecipe,validateFood,exportsFor} from '../worker.mjs';
-let env,db;
-class Statement{constructor(q,args=[]){this.q=q;this.args=args;}bind(...args){return new Statement(this.q,args);}async first(){return db.prepare(this.q).get(...this.args)||null;}async all(){return {results:db.prepare(this.q).all(...this.args)};}async run(){return {meta:db.prepare(this.q).run(...this.args)};}}
-const origin='https://kitchen.example';
-const recipe={title:'Synthetic test recipe',ingredients:[{name:'test oats',amount:'100 g',grams:null,food_id:null}],steps:['Synthetic step'],source_note:'PRIVATE SOURCE',notes:'PRIVATE NOTE',servings:2};
-beforeEach(()=>{db=new DatabaseSync(':memory:');db.exec(readFileSync(new URL('../schema.sql',import.meta.url),'utf8'));const objects=new Map();env={ALLOWED_ORIGINS:origin,DB:{prepare:q=>new Statement(q),batch:async ss=>{db.exec('BEGIN');try{const result=[];for(const s of ss)result.push(await s.run());db.exec('COMMIT');return result;}catch(e){db.exec('ROLLBACK');throw e;}}},MEDIA:{put:async(k,b)=>objects.set(k,b),get:async k=>objects.has(k)?{body:objects.get(k)}:null,delete:async k=>objects.delete(k)}};});
-async function request(path,method='GET',data, cookie='',extra={}){const headers={Origin:origin,...extra};if(cookie)headers.Cookie=cookie;let body;if(data!==undefined){headers['Content-Type']='application/json';body=JSON.stringify(data);}return worker.fetch(new Request(origin+path,{method,headers,body}),env);}
-async function join(label='Synthetic cook'){const invite=crypto.randomUUID();db.prepare('INSERT INTO invitations(hash,expires_at) VALUES(?,?)').run(await hash(invite),Date.now()+60000);const r=await request('/api/join','POST',{invite,name:label});assert.equal(r.status,201);return {...await r.json(),cookie:r.headers.get('set-cookie').split(';')[0],invite};}
-async function create(a,patch={}){const r=await request('/api/recipes','POST',{...recipe,...patch},a.cookie);assert.equal(r.status,201);return r.json();}
-test('anonymous notebook and photo reads fail closed',async()=>{for(const path of ['/api/me','/api/recipes','/api/journal','/api/foods','/photo/anything'])assert.equal((await request(path)).status,401);});
-test('invites are single-use and recovery creates a secure session',async()=>{const a=await join();assert.equal((await request('/api/join','POST',{invite:a.invite,name:'Duplicate'})).status,403);const r=await request('/api/open','POST',{key:a.recovery_key});assert.equal(r.status,200);assert.match(r.headers.get('set-cookie'),/HttpOnly; Secure; SameSite=Strict/);assert.equal((await request('/api/open','POST',{key:'a'.repeat(64)})).status,401);});
-test('expired invites and sessions are rejected',async()=>{const a=await join();db.exec('UPDATE sessions SET expires_at=0');assert.equal((await request('/api/me','GET',undefined,a.cookie)).status,401);db.prepare('INSERT INTO invitations VALUES(?,0,NULL,NULL)').run(await hash('expired'));assert.equal((await request('/api/join','POST',{invite:'expired',name:'test'})).status,403);});
-test('cross-notebook reads, edits, journal links, exports and photo reads are denied',async()=>{const a=await join('A'),b=await join('B'),r=await create(a);for(const suffix of ['','/versions','/nutrition','/exports'])assert.equal((await request('/api/recipes/'+r.id+suffix,'GET',undefined,b.cookie)).status,404);assert.equal((await request('/api/recipes/'+r.id,'PUT',{...r,title:'Changed'},b.cookie)).status,404);assert.equal((await request('/api/journal','POST',{recipe_id:r.id,cooked_on:'2026-11-04',note:'test'},b.cookie)).status,404);assert.equal((await request('/api/export','POST',{key:a.recovery_key},b.cookie)).status,403);});
-test('CSRF origins are rejected before write',async()=>{const a=await join();const r=await request('/api/recipes','POST',recipe,a.cookie,{Origin:'https://evil.example'});assert.equal(r.status,403);assert.equal((await request('/api/recipes','GET',undefined,a.cookie)).status,200);});
-test('version history and stale-update conflict preserve source',async()=>{const a=await join(),r=await create(a);assert.equal((await request('/api/recipes/'+r.id,'PUT',{...r,title:'Revision'},a.cookie)).status,200);assert.equal((await request('/api/recipes/'+r.id,'PUT',{...r,title:'Overwrite'},a.cookie)).status,409);const history=await (await request('/api/recipes/'+r.id+'/versions','GET',undefined,a.cookie)).json();assert.equal(history.versions.length,2);assert.equal(JSON.parse(history.versions[1].data).source_note,'PRIVATE SOURCE');});
-test('public snapshots exclude private notes and remain fixed after edits',async()=>{const a=await join(),r=await create(a);assert.equal((await (await request('/api/public')).json()).recipes.length,0);assert.equal((await request('/api/recipes/'+r.id+'/publish','POST',{version:1,confirm:'PUBLISH_RECIPE',rights_confirmed:true,key:'bad'},a.cookie)).status,403);assert.equal((await request('/api/recipes/'+r.id+'/publish','POST',{version:1,confirm:'PUBLISH_RECIPE',rights_confirmed:true,key:a.recovery_key},a.cookie)).status,200);await request('/api/recipes/'+r.id,'PUT',{...r,title:'Private edit'},a.cookie);const body=JSON.stringify(await (await request('/api/public')).json());assert.ok(!body.includes('PRIVATE'));assert.ok(!body.includes('Private edit'));await request('/api/recipes/'+r.id+'/publish','DELETE',{},a.cookie);assert.equal((await (await request('/api/public')).json()).recipes.length,0);});
-test('food IDs cannot cross notebook boundaries',async()=>{const a=await join(),b=await join();const f=await (await request('/api/foods','POST',{name:'test oats',source:'synthetic label',kcal:100},a.cookie)).json();assert.equal((await request('/api/recipes','POST',{...recipe,ingredients:[{name:'oats',grams:100,food_id:f.id}]},b.cookie)).status,400);});
-test('nutrition propagates unknown values and calculates weighed portions',()=>{const r=validateRecipe({...recipe,ingredients:[{name:'oats',grams:80,food_id:'f'}]});const n=nutrition(r,[{id:'f',kcal:400,protein_g:10,carbs_g:60,fat_g:8,fiber_g:null,salt_g:0,source:'test'}]);assert.equal(n.per_serving.kcal,160);assert.equal(n.per_serving.protein_g,4);assert.equal(n.per_serving.fiber_g,null);assert.equal(n.status,'estimate');const incomplete=nutrition({...r,ingredients:[...r.ingredients,{name:'oil',grams:null,food_id:null}]},[]);assert.equal(incomplete.status,'incomplete');assert.equal(incomplete.recipe_total.kcal,null);assert.deepEqual(incomplete.missing,['oats','oil']);});
-test('invalid quantities, source schemes and excess lists rejected',()=>{assert.throws(()=>validateRecipe({...recipe,servings:0}));assert.throws(()=>validateRecipe({...recipe,source_url:'javascript:alert(1)'}));assert.throws(()=>validateRecipe({...recipe,steps:Array(61).fill('step')}));assert.throws(()=>validateFood({name:'test',source:'label',kcal:-1}));});
-test('exports exclude private notes and produce drafts only',()=>{const d=exportsFor(validateRecipe(recipe));assert.equal(d.tumblr.state,'draft');assert.ok(!JSON.stringify(d).includes('PRIVATE'));assert.equal(d.recipe_jsonld['@type'],'Recipe');});
-test('MCP initializes, lists only public read tools and cannot publish',async()=>{const init=await (await request('/mcp','POST',{jsonrpc:'2.0',id:1,method:'initialize',params:{protocolVersion:'2025-03-26'}})).json();assert.equal(init.result.protocolVersion,'2025-03-26');const ls=await (await request('/mcp','POST',{jsonrpc:'2.0',id:2,method:'tools/list'})).json();assert.equal(ls.result.tools.length,2);assert.ok(ls.result.tools.every(t=>t.annotations.readOnlyHint));assert.equal((await (await request('/mcp','POST',{jsonrpc:'2.0',id:3,method:'tools/call',params:{name:'publish'}})).json()).error.code,-32602);});
-test('MCP search never returns private recipes',async()=>{const a=await join();await create(a);const r=await (await request('/mcp','POST',{jsonrpc:'2.0',id:1,method:'tools/call',params:{name:'search_public_recipes',arguments:{query:''}}})).json();assert.equal(r.result.content[0].text,'[]');});
-test('photo upload validates magic, enforces ownership, revokes public read',async()=>{const a=await join(),b=await join(),r=await create(a);const upload=data=>worker.fetch(new Request(origin+'/api/recipes/'+r.id+'/photo',{method:'POST',headers:{Origin:origin,Cookie:a.cookie,'Content-Type':'image/jpeg'},body:data}),env);assert.equal((await upload(new Uint8Array(20))).status,415);const bytes=new Uint8Array(20);bytes.set([255,216,255]);const image=await (await upload(bytes)).json();assert.equal((await request('/photo/'+image.id,'GET',undefined,b.cookie)).status,404);assert.equal((await request('/photo/'+image.id,'GET',undefined,a.cookie)).status,200);assert.equal((await request('/public-photo/'+image.id)).status,404);await request('/api/recipes/'+r.id+'/publish','POST',{version:1,confirm:'PUBLISH_RECIPE',rights_confirmed:true,key:a.recovery_key},a.cookie);assert.equal((await request('/public-photo/'+image.id)).status,200);await request('/api/recipes/'+r.id+'/publish','DELETE',{},a.cookie);assert.equal((await request('/public-photo/'+image.id)).status,404);});
-test('recipe deletion clears versions, photos and publications; journal stays',async()=>{const a=await join(),r=await create(a);await request('/api/journal','POST',{recipe_id:r.id,cooked_on:'2026-11-04',note:'synthetic memory'},a.cookie);assert.equal((await request('/api/recipes/'+r.id,'DELETE',{},a.cookie)).status,200);assert.equal(db.prepare('SELECT count(*) n FROM recipe_versions').get().n,0);assert.equal(db.prepare('SELECT recipe_id FROM journal').get().recipe_id,null);});
-test('logout invalidates the session',async()=>{const a=await join();await request('/api/logout','POST',{},a.cookie);assert.equal((await request('/api/me','GET',undefined,a.cookie)).status,401);});
-test('private JSON export excludes all credential hashes',async()=>{const a=await join();await create(a);const r=await request('/api/export','POST',{key:a.recovery_key},a.cookie);assert.equal(r.status,200);const d=await r.text();assert.ok(d.includes('PRIVATE SOURCE'));assert.ok(!d.includes('recovery_hash'));assert.ok(!d.includes(a.recovery_key));});
-test('AI is opt-in, bounded, and returns an unsaved private draft',async()=>{const a=await join();let calls=0;env.AI={run:async()=>{calls++;return {response:JSON.stringify({...recipe,status:'tested',ingredients:[{name:'test',amount:'',grams:999,food_id:'foreign'}]}),usage:{prompt_tokens:100,completion_tokens:80}};}};assert.equal((await request('/api/assist','POST',{notes:'test'},a.cookie)).status,400);const result=await request('/api/assist','POST',{notes:'Original synthetic notes',consent:true},a.cookie);assert.equal(result.status,200);const {draft}=await result.json();assert.equal(draft.source_note,'Original synthetic notes');assert.equal(draft.status,'draft');assert.equal(draft.ingredients[0].grams,null);assert.equal(draft.ingredients[0].food_id,null);assert.equal(db.prepare('SELECT count(*) n FROM recipes').get().n,0);assert.equal(calls,1);db.prepare('UPDATE ai_daily SET calls=10 WHERE key LIKE ?').run('profile:%');assert.equal((await request('/api/assist','POST',{notes:'test',consent:true},a.cookie)).status,429);assert.equal(calls,1);});
-test('malformed AI responses fail without writing recipes',async()=>{const a=await join();env.AI={run:async()=>({response:'not json'})};assert.equal((await request('/api/assist','POST',{notes:'test',consent:true},a.cookie)).status,502);assert.equal(db.prepare('SELECT count(*) n FROM recipes').get().n,0);assert.equal(db.prepare('SELECT status FROM ai_runs').get().status,'failed');});
+import { test, beforeEach } from "node:test";
+import assert from "node:assert/strict";
+import { DatabaseSync } from "node:sqlite";
+import { readFileSync } from "node:fs";
+import worker, {
+  hash,
+  nutrition,
+  validateRecipe,
+  validateFood,
+  exportsFor,
+} from "../worker.mjs";
+let env, db;
+class Statement {
+  constructor(q, args = []) {
+    this.q = q;
+    this.args = args;
+  }
+  bind(...args) {
+    return new Statement(this.q, args);
+  }
+  async first() {
+    return db.prepare(this.q).get(...this.args) || null;
+  }
+  async all() {
+    return { results: db.prepare(this.q).all(...this.args) };
+  }
+  async run() {
+    return { meta: db.prepare(this.q).run(...this.args) };
+  }
+}
+const origin = "https://kitchen.example";
+const recipe = {
+  title: "Synthetic test recipe",
+  ingredients: [
+    { name: "test oats", amount: "100 g", grams: null, food_id: null },
+  ],
+  steps: ["Synthetic step"],
+  source_note: "PRIVATE SOURCE",
+  notes: "PRIVATE NOTE",
+  servings: 2,
+};
+beforeEach(() => {
+  db = new DatabaseSync(":memory:");
+  db.exec(readFileSync(new URL("../schema.sql", import.meta.url), "utf8"));
+  const objects = new Map();
+  env = {
+    ALLOWED_ORIGINS: origin,
+    DB: {
+      prepare: (q) => new Statement(q),
+      batch: async (ss) => {
+        db.exec("BEGIN");
+        try {
+          const result = [];
+          for (const s of ss) result.push(await s.run());
+          db.exec("COMMIT");
+          return result;
+        } catch (e) {
+          db.exec("ROLLBACK");
+          throw e;
+        }
+      },
+    },
+    MEDIA: {
+      put: async (k, b) => objects.set(k, b),
+      get: async (k) => (objects.has(k) ? { body: objects.get(k) } : null),
+      delete: async (k) => objects.delete(k),
+    },
+  };
+});
+async function request(path, method = "GET", data, cookie = "", extra = {}) {
+  const headers = { Origin: origin, ...extra };
+  if (cookie) headers.Cookie = cookie;
+  let body;
+  if (data !== undefined) {
+    headers["Content-Type"] = "application/json";
+    body = JSON.stringify(data);
+  }
+  return worker.fetch(
+    new Request(origin + path, { method, headers, body }),
+    env,
+  );
+}
+async function join(label = "Synthetic cook") {
+  const invite = crypto.randomUUID();
+  db.prepare("INSERT INTO invitations(hash,expires_at) VALUES(?,?)").run(
+    await hash(invite),
+    Date.now() + 60000,
+  );
+  const r = await request("/api/join", "POST", { invite, name: label });
+  assert.equal(r.status, 201);
+  return {
+    ...(await r.json()),
+    cookie: r.headers.get("set-cookie").split(";")[0],
+    invite,
+  };
+}
+async function create(a, patch = {}) {
+  const r = await request(
+    "/api/recipes",
+    "POST",
+    { ...recipe, ...patch },
+    a.cookie,
+  );
+  assert.equal(r.status, 201);
+  return r.json();
+}
+test("anonymous notebook and photo reads fail closed", async () => {
+  for (const path of [
+    "/api/me",
+    "/api/recipes",
+    "/api/journal",
+    "/api/foods",
+    "/photo/anything",
+  ])
+    assert.equal((await request(path)).status, 401);
+});
+test("invites are single-use and recovery creates a secure session", async () => {
+  const a = await join();
+  assert.equal(
+    (
+      await request("/api/join", "POST", {
+        invite: a.invite,
+        name: "Duplicate",
+      })
+    ).status,
+    403,
+  );
+  const r = await request("/api/open", "POST", { key: a.recovery_key });
+  assert.equal(r.status, 200);
+  assert.match(
+    r.headers.get("set-cookie"),
+    /HttpOnly; Secure; SameSite=Strict/,
+  );
+  assert.equal(
+    (await request("/api/open", "POST", { key: "a".repeat(64) })).status,
+    401,
+  );
+});
+test("expired invites and sessions are rejected", async () => {
+  const a = await join();
+  db.exec("UPDATE sessions SET expires_at=0");
+  assert.equal(
+    (await request("/api/me", "GET", undefined, a.cookie)).status,
+    401,
+  );
+  db.prepare("INSERT INTO invitations VALUES(?,0,NULL,NULL)").run(
+    await hash("expired"),
+  );
+  assert.equal(
+    (await request("/api/join", "POST", { invite: "expired", name: "test" }))
+      .status,
+    403,
+  );
+});
+test("cross-notebook reads, edits, journal links, exports and photo reads are denied", async () => {
+  const a = await join("A"),
+    b = await join("B"),
+    r = await create(a);
+  for (const suffix of ["", "/versions", "/nutrition", "/exports"])
+    assert.equal(
+      (
+        await request(
+          "/api/recipes/" + r.id + suffix,
+          "GET",
+          undefined,
+          b.cookie,
+        )
+      ).status,
+      404,
+    );
+  assert.equal(
+    (
+      await request(
+        "/api/recipes/" + r.id,
+        "PUT",
+        { ...r, title: "Changed" },
+        b.cookie,
+      )
+    ).status,
+    404,
+  );
+  assert.equal(
+    (
+      await request(
+        "/api/journal",
+        "POST",
+        { recipe_id: r.id, cooked_on: "2026-11-04", note: "test" },
+        b.cookie,
+      )
+    ).status,
+    404,
+  );
+  assert.equal(
+    (await request("/api/export", "POST", { key: a.recovery_key }, b.cookie))
+      .status,
+    403,
+  );
+});
+test("CSRF origins are rejected before write", async () => {
+  const a = await join();
+  const r = await request("/api/recipes", "POST", recipe, a.cookie, {
+    Origin: "https://evil.example",
+  });
+  assert.equal(r.status, 403);
+  assert.equal(
+    (await request("/api/recipes", "GET", undefined, a.cookie)).status,
+    200,
+  );
+});
+test("version history and stale-update conflict preserve source", async () => {
+  const a = await join(),
+    r = await create(a);
+  assert.equal(
+    (
+      await request(
+        "/api/recipes/" + r.id,
+        "PUT",
+        { ...r, title: "Revision" },
+        a.cookie,
+      )
+    ).status,
+    200,
+  );
+  assert.equal(
+    (
+      await request(
+        "/api/recipes/" + r.id,
+        "PUT",
+        { ...r, title: "Overwrite" },
+        a.cookie,
+      )
+    ).status,
+    409,
+  );
+  const history = await (
+    await request(
+      "/api/recipes/" + r.id + "/versions",
+      "GET",
+      undefined,
+      a.cookie,
+    )
+  ).json();
+  assert.equal(history.versions.length, 2);
+  assert.equal(
+    JSON.parse(history.versions[1].data).source_note,
+    "PRIVATE SOURCE",
+  );
+});
+test("public snapshots exclude private notes and remain fixed after edits", async () => {
+  const a = await join(),
+    r = await create(a);
+  assert.equal((await (await request("/api/public")).json()).recipes.length, 0);
+  assert.equal(
+    (
+      await request(
+        "/api/recipes/" + r.id + "/publish",
+        "POST",
+        {
+          version: 1,
+          confirm: "PUBLISH_RECIPE",
+          rights_confirmed: true,
+          key: "bad",
+        },
+        a.cookie,
+      )
+    ).status,
+    403,
+  );
+  assert.equal(
+    (
+      await request(
+        "/api/recipes/" + r.id + "/publish",
+        "POST",
+        {
+          version: 1,
+          confirm: "PUBLISH_RECIPE",
+          rights_confirmed: true,
+          key: a.recovery_key,
+        },
+        a.cookie,
+      )
+    ).status,
+    200,
+  );
+  await request(
+    "/api/recipes/" + r.id,
+    "PUT",
+    { ...r, title: "Private edit" },
+    a.cookie,
+  );
+  const body = JSON.stringify(await (await request("/api/public")).json());
+  assert.ok(!body.includes("PRIVATE"));
+  assert.ok(!body.includes("Private edit"));
+  await request("/api/recipes/" + r.id + "/publish", "DELETE", {}, a.cookie);
+  assert.equal((await (await request("/api/public")).json()).recipes.length, 0);
+});
+test("food IDs cannot cross notebook boundaries", async () => {
+  const a = await join(),
+    b = await join();
+  const f = await (
+    await request(
+      "/api/foods",
+      "POST",
+      { name: "test oats", source: "synthetic label", kcal: 100 },
+      a.cookie,
+    )
+  ).json();
+  assert.equal(
+    (
+      await request(
+        "/api/recipes",
+        "POST",
+        {
+          ...recipe,
+          ingredients: [{ name: "oats", grams: 100, food_id: f.id }],
+        },
+        b.cookie,
+      )
+    ).status,
+    400,
+  );
+});
+test("nutrition propagates unknown values and calculates weighed portions", () => {
+  const r = validateRecipe({
+    ...recipe,
+    ingredients: [{ name: "oats", grams: 80, food_id: "f" }],
+  });
+  const n = nutrition(r, [
+    {
+      id: "f",
+      kcal: 400,
+      protein_g: 10,
+      carbs_g: 60,
+      fat_g: 8,
+      fiber_g: null,
+      salt_g: 0,
+      source: "test",
+    },
+  ]);
+  assert.equal(n.per_serving.kcal, 160);
+  assert.equal(n.per_serving.protein_g, 4);
+  assert.equal(n.per_serving.fiber_g, null);
+  assert.equal(n.status, "estimate");
+  const incomplete = nutrition(
+    {
+      ...r,
+      ingredients: [
+        ...r.ingredients,
+        { name: "oil", grams: null, food_id: null },
+      ],
+    },
+    [],
+  );
+  assert.equal(incomplete.status, "incomplete");
+  assert.equal(incomplete.recipe_total.kcal, null);
+  assert.deepEqual(incomplete.missing, ["oats", "oil"]);
+});
+test("invalid quantities, source schemes and excess lists rejected", () => {
+  assert.throws(() => validateRecipe({ ...recipe, servings: 0 }));
+  assert.throws(() =>
+    validateRecipe({ ...recipe, source_url: "javascript:alert(1)" }),
+  );
+  assert.throws(() =>
+    validateRecipe({ ...recipe, steps: Array(61).fill("step") }),
+  );
+  assert.throws(() =>
+    validateFood({ name: "test", source: "label", kcal: -1 }),
+  );
+});
+test("exports exclude private notes and produce drafts only", () => {
+  const d = exportsFor(validateRecipe(recipe));
+  assert.equal(d.tumblr.state, "draft");
+  assert.ok(!JSON.stringify(d).includes("PRIVATE"));
+  assert.equal(d.recipe_jsonld["@type"], "Recipe");
+});
+test("MCP initializes, lists only public read tools and cannot publish", async () => {
+  const init = await (
+    await request("/mcp", "POST", {
+      jsonrpc: "2.0",
+      id: 1,
+      method: "initialize",
+      params: { protocolVersion: "2025-03-26" },
+    })
+  ).json();
+  assert.equal(init.result.protocolVersion, "2025-03-26");
+  const ls = await (
+    await request("/mcp", "POST", {
+      jsonrpc: "2.0",
+      id: 2,
+      method: "tools/list",
+    })
+  ).json();
+  assert.equal(ls.result.tools.length, 2);
+  assert.ok(ls.result.tools.every((t) => t.annotations.readOnlyHint));
+  assert.equal(
+    (
+      await (
+        await request("/mcp", "POST", {
+          jsonrpc: "2.0",
+          id: 3,
+          method: "tools/call",
+          params: { name: "publish" },
+        })
+      ).json()
+    ).error.code,
+    -32602,
+  );
+});
+test("MCP search never returns private recipes", async () => {
+  const a = await join();
+  await create(a);
+  const r = await (
+    await request("/mcp", "POST", {
+      jsonrpc: "2.0",
+      id: 1,
+      method: "tools/call",
+      params: { name: "search_public_recipes", arguments: { query: "" } },
+    })
+  ).json();
+  assert.equal(r.result.content[0].text, "[]");
+});
+test("photo upload validates magic, enforces ownership, revokes public read", async () => {
+  const a = await join(),
+    b = await join(),
+    r = await create(a);
+  const upload = (data) =>
+    worker.fetch(
+      new Request(origin + "/api/recipes/" + r.id + "/photo", {
+        method: "POST",
+        headers: {
+          Origin: origin,
+          Cookie: a.cookie,
+          "Content-Type": "image/jpeg",
+        },
+        body: data,
+      }),
+      env,
+    );
+  assert.equal((await upload(new Uint8Array(20))).status, 415);
+  const bytes = new Uint8Array(20);
+  bytes.set([255, 216, 255]);
+  const image = await (await upload(bytes)).json();
+  assert.equal(
+    (await request("/photo/" + image.id, "GET", undefined, b.cookie)).status,
+    404,
+  );
+  assert.equal(
+    (await request("/photo/" + image.id, "GET", undefined, a.cookie)).status,
+    200,
+  );
+  assert.equal((await request("/public-photo/" + image.id)).status, 404);
+  await request(
+    "/api/recipes/" + r.id + "/publish",
+    "POST",
+    {
+      version: 1,
+      confirm: "PUBLISH_RECIPE",
+      rights_confirmed: true,
+      key: a.recovery_key,
+    },
+    a.cookie,
+  );
+  assert.equal((await request("/public-photo/" + image.id)).status, 200);
+  await request("/api/recipes/" + r.id + "/publish", "DELETE", {}, a.cookie);
+  assert.equal((await request("/public-photo/" + image.id)).status, 404);
+});
+test("recipe deletion clears versions, photos and publications; journal stays", async () => {
+  const a = await join(),
+    r = await create(a);
+  await request(
+    "/api/journal",
+    "POST",
+    { recipe_id: r.id, cooked_on: "2026-11-04", note: "synthetic memory" },
+    a.cookie,
+  );
+  assert.equal(
+    (await request("/api/recipes/" + r.id, "DELETE", {}, a.cookie)).status,
+    200,
+  );
+  assert.equal(db.prepare("SELECT count(*) n FROM recipe_versions").get().n, 0);
+  assert.equal(
+    db.prepare("SELECT recipe_id FROM journal").get().recipe_id,
+    null,
+  );
+});
+test("logout invalidates the session", async () => {
+  const a = await join();
+  await request("/api/logout", "POST", {}, a.cookie);
+  assert.equal(
+    (await request("/api/me", "GET", undefined, a.cookie)).status,
+    401,
+  );
+});
+test("private JSON export excludes all credential hashes", async () => {
+  const a = await join();
+  await create(a);
+  const r = await request(
+    "/api/export",
+    "POST",
+    { key: a.recovery_key },
+    a.cookie,
+  );
+  assert.equal(r.status, 200);
+  const d = await r.text();
+  assert.ok(d.includes("PRIVATE SOURCE"));
+  assert.ok(!d.includes("recovery_hash"));
+  assert.ok(!d.includes(a.recovery_key));
+});
+test("AI is opt-in, bounded, and returns an unsaved private draft", async () => {
+  const a = await join();
+  let calls = 0;
+  env.AI = {
+    run: async () => {
+      calls++;
+      return {
+        response: JSON.stringify({
+          ...recipe,
+          status: "tested",
+          ingredients: [
+            { name: "test", amount: "", grams: 999, food_id: "foreign" },
+          ],
+        }),
+        usage: { prompt_tokens: 100, completion_tokens: 80 },
+      };
+    },
+  };
+  assert.equal(
+    (await request("/api/assist", "POST", { notes: "test" }, a.cookie)).status,
+    400,
+  );
+  const result = await request(
+    "/api/assist",
+    "POST",
+    { notes: "Original synthetic notes", consent: true },
+    a.cookie,
+  );
+  assert.equal(result.status, 200);
+  const { draft } = await result.json();
+  assert.equal(draft.source_note, "Original synthetic notes");
+  assert.equal(draft.status, "draft");
+  assert.equal(draft.ingredients[0].grams, null);
+  assert.equal(draft.ingredients[0].food_id, null);
+  assert.equal(db.prepare("SELECT count(*) n FROM recipes").get().n, 0);
+  assert.equal(calls, 1);
+  db.prepare("UPDATE ai_daily SET calls=10 WHERE key LIKE ?").run("profile:%");
+  assert.equal(
+    (
+      await request(
+        "/api/assist",
+        "POST",
+        { notes: "test", consent: true },
+        a.cookie,
+      )
+    ).status,
+    429,
+  );
+  assert.equal(calls, 1);
+});
+test("malformed AI responses fail without writing recipes", async () => {
+  const a = await join();
+  env.AI = { run: async () => ({ response: "not json" }) };
+  assert.equal(
+    (
+      await request(
+        "/api/assist",
+        "POST",
+        { notes: "test", consent: true },
+        a.cookie,
+      )
+    ).status,
+    502,
+  );
+  assert.equal(db.prepare("SELECT count(*) n FROM recipes").get().n, 0);
+  assert.equal(db.prepare("SELECT status FROM ai_runs").get().status, "failed");
+});
+
+test("public recipe URLs are server-rendered, escaped and revocable", async () => {
+  const a = await join(),
+    r = await create(a, {
+      title: "Synthetic </script><img src=x onerror=alert(1)> recipe",
+    });
+  assert.equal((await request("/r/" + r.id)).status, 404);
+  await request(
+    "/api/recipes/" + r.id + "/publish",
+    "POST",
+    {
+      version: 1,
+      confirm: "PUBLISH_RECIPE",
+      rights_confirmed: true,
+      key: a.recovery_key,
+    },
+    a.cookie,
+  );
+  const page = await request("/r/" + r.id),
+    html = await page.text();
+  assert.equal(page.status, 200);
+  assert.ok(html.includes("application/ld+json"));
+  assert.ok(html.includes('rel="canonical"'));
+  assert.ok(!html.includes("PRIVATE"));
+  assert.ok(!html.includes("<img src=x"));
+  assert.ok(html.includes("\\u003c/script>"));
+  await request("/api/recipes/" + r.id + "/publish", "DELETE", {}, a.cookie);
+  assert.equal((await request("/r/" + r.id)).status, 404);
+});

@@ -29,7 +29,12 @@ Return (1) a polished recipe draft, (2) a dated cooking-journal note, (3) option
   "servings": null,
   "minutes": null,
   "ingredients": [
-    {"name": "Ingredient", "amount": "quantity only when known", "grams": null, "food_id": null}
+    {
+      "name": "Ingredient",
+      "amount": "quantity only when known",
+      "grams": null,
+      "food_id": null
+    }
   ],
   "steps": ["Confirmed step"],
   "tags": [],

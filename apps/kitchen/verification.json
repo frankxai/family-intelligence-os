@@ -4,14 +4,78 @@
   "app_url": "https://starlight-kitchen.vercel.app/",
   "worker": "starlight-kitchen",
   "base_commit": "94899e0fef5366616534a25e08686ee59b6e2507",
-  "automated_contract_tests": {"passed":19,"failed":0,"command":"node --test apps/kitchen/test/*.test.mjs"},
-  "live_backend_checks": {"passed":19,"failed":0,"method":"temporary isolated Worker calling the deployed app via service binding; fixed synthetic inputs; no user records; temporary Worker deleted after verification"},
-  "live_checks": ["anonymous API denial","single-use invitation","secure cookie attributes","session authentication","D1 recipe write","food record write","recipe version write","nutrition calculation","journal write","private R2 write","private R2 read","public photo denial","draft sanitization","real Workers AI generation","notebook export","MCP initialization","MCP private exclusion","recipe and R2 cleanup","logout"],
-  "model_call": {"model":"@cf/meta/llama-4-scout-17b-16e-instruct","status":"complete","input_tokens":217,"output_tokens":59},
-  "browser": {"landing_rendered":true,"onboarding_rendered":true,"authenticated_UI_flow":"not executed; authentication and data actions were verified through backend requests"},
-  "vercel_rewrite": {"health_http_status":200,"private_cache_control":"no-store"},
-  "cleanup": {"temporary_worker_deleted":true,"synthetic_profiles_remaining":0,"photos_remaining":0,"publications_created":0,"unused_private_invitations":2},
-  "post_live_test_changes": ["unknown full-recipe nutrient totals stay null when any ingredient is unmatched","audit records added for profile updates, photo writes and journal deletion","recipe delete action exposed in UI","companion wording corrected to second person"],
-  "post_change_validation": "All 19 contract tests and JS syntax checks passed; deployment health and onboarding checked after final redeploy.",
-  "not_claimed": ["full family-vault readiness","independent security review","automated private ChatGPT connection","social OAuth posting","scheduled agents","offsite restore drill","current-2026 MCP transport/client certification","end-to-end encryption"]
+  "automated_contract_tests": {
+    "passed": 20,
+    "failed": 0,
+    "command": "node --test apps/kitchen/test/*.test.mjs"
+  },
+  "live_backend_checks": {
+    "passed": 19,
+    "failed": 0,
+    "method": "temporary isolated Worker calling the deployed app via service binding; fixed synthetic inputs; no user records; temporary Worker deleted after verification"
+  },
+  "live_checks": [
+    "anonymous API denial",
+    "single-use invitation",
+    "secure cookie attributes",
+    "session authentication",
+    "D1 recipe write",
+    "food record write",
+    "recipe version write",
+    "nutrition calculation",
+    "journal write",
+    "private R2 write",
+    "private R2 read",
+    "public photo denial",
+    "draft sanitization",
+    "real Workers AI generation",
+    "notebook export",
+    "MCP initialization",
+    "MCP private exclusion",
+    "recipe and R2 cleanup",
+    "logout"
+  ],
+  "model_call": {
+    "model": "@cf/meta/llama-4-scout-17b-16e-instruct",
+    "status": "complete",
+    "input_tokens": 217,
+    "output_tokens": 59
+  },
+  "browser": {
+    "landing_rendered": true,
+    "onboarding_rendered": true,
+    "authenticated_UI_flow": "not executed; authentication and data actions were verified through backend requests"
+  },
+  "vercel_rewrite": {
+    "health_http_status": 200,
+    "private_cache_control": "no-store"
+  },
+  "cleanup": {
+    "temporary_worker_deleted": true,
+    "synthetic_profiles_remaining": 0,
+    "photos_remaining": 0,
+    "publications_created": 0,
+    "unused_private_invitations": 2
+  },
+  "post_live_test_changes": [
+    "unknown full-recipe nutrient totals stay null when any ingredient is unmatched",
+    "audit records added for profile updates, photo writes and journal deletion",
+    "recipe delete action exposed in UI",
+    "companion wording corrected to second person",
+    "server-rendered individual public recipe pages with escaped Recipe JSON-LD and revocation tests"
+  ],
+  "post_change_validation": "All 20 contract tests and JS syntax checks passed; final Vercel READY and HTTP health/access checks verified.",
+  "not_claimed": [
+    "full family-vault readiness",
+    "independent security review",
+    "automated private ChatGPT connection",
+    "social OAuth posting",
+    "scheduled agents",
+    "offsite restore drill",
+    "current-2026 MCP transport/client certification",
+    "end-to-end encryption"
+  ],
+  "final_worker_sha256": "437ad7a7a2f6cf9f119aab0c7937ed080922b005c17143119e4de50852f97844",
+  "final_worker_deployment_id": "7021dd554614454293af5543443aad08",
+  "final_vercel_deployment_id": "dpl_3t3WsDK5xo4uMbHmtzJfVvRP5dLn"
 }

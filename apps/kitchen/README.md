@@ -11,19 +11,19 @@ A private recipe and cooking-journal app with a small, deliberate publication su
 
 One-use, expiring invitations create separate notebooks. Each person receives a random 256-bit recovery/access key, stored server-side only as a SHA-256 digest. Secure HttpOnly SameSite=Strict session cookies expire after 30 days. This is an invitation-only cooking pilot, not a general identity provider; email recovery and passkeys remain a release gate for wider rollout. Never commit invitation links, keys, real recipes, health constraints or photos.
 
-Recipes preserve source notes and immutable saved versions. Cooking sessions are separately dated. Foods store source, state and per-100g values. Recipe calculations require explicit food matching and gram weights; missing ingredients or nutrient fields do not become zero. Photos use private R2 keys scoped to notebook ID; browsers re-encode supported raster files to JPEG and strip metadata. These are resized derivatives, not archival originals. Public copies are snapshots with a positive field allowlist and selected attached photos; private edits do not update them automatically.
+Recipes preserve source notes and immutable saved versions. Cooking sessions are separately dated. Foods store source, state and per-100g values. Recipe calculations require explicit food matching and gram weights; missing ingredients or nutrient fields do not become zero. Photos use private R2 keys scoped to notebook ID; browsers re-encode supported raster files to JPEG and strip metadata. These are resized derivatives, not archival originals. Individual public recipes have server-rendered `/r/<id>` pages, canonical URLs and escaped Recipe JSON-LD. Public copies are snapshots with a positive field allowlist and selected attached photos; private edits do not update them automatically.
 
 Publication is a dedicated UI review action, requires the current recipe version, a rights confirmation and the notebook key. Public MCP has no write or private-read tool. Imports and AI drafts cannot set publication state. No social account is connected. Tumblr JSON is a draft payload, YouTube output is description/story text, and print produces a recipe card for PDF export. This pilot does not upload video or post YouTube Community content.
 
 ## Runtime
 
-| Component | Deployed responsibility |
-| --- | --- |
-| Vercel `starlight-kitchen` | Static responsive UI; same-origin rewrites to the Worker |
-| Worker `starlight-kitchen` | Authorization on every private route; API, exports, AI draft boundary, public MCP |
-| D1 `starlight-kitchen` | EU-jurisdiction database; profiles, sessions, invitations, recipes, versions, journal, foods, photos, publication snapshots, audit metadata, rate limits, AI quotas/runs |
-| Existing `starlight-media-private` R2 bucket | `kitchen/<profile-id>/<photo-id>.jpg` only; no public bucket access enabled |
-| Workers AI | Llama 4 Scout; text-only recipe drafts with explicit processing consent, no tool calls |
+| Component                                    | Deployed responsibility                                                                                                                                                  |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Vercel `starlight-kitchen`                   | Static responsive UI; same-origin rewrites to the Worker                                                                                                                 |
+| Worker `starlight-kitchen`                   | Authorization on every private route; API, exports, AI draft boundary, public MCP                                                                                        |
+| D1 `starlight-kitchen`                       | EU-jurisdiction database; profiles, sessions, invitations, recipes, versions, journal, foods, photos, publication snapshots, audit metadata, rate limits, AI quotas/runs |
+| Existing `starlight-media-private` R2 bucket | `kitchen/<profile-id>/<photo-id>.jpg` only; no public bucket access enabled                                                                                              |
+| Workers AI                                   | Llama 4 Scout; text-only recipe drafts with explicit processing consent, no tool calls                                                                                   |
 
 D1 jurisdiction does not establish end-to-end EU residency for Vercel, existing R2, model processing or every request. No broad residency or end-to-end encryption claim is made.
 
