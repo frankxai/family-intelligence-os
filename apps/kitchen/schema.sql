@@ -1,0 +1,21 @@
+PRAGMA foreign_keys = ON;
+CREATE TABLE IF NOT EXISTS invitations (hash TEXT PRIMARY KEY, expires_at INTEGER NOT NULL, used_at INTEGER, profile_id TEXT);
+CREATE TABLE IF NOT EXISTS profiles (id TEXT PRIMARY KEY, name TEXT NOT NULL, bio TEXT NOT NULL DEFAULT '', preferences TEXT NOT NULL DEFAULT '', recovery_hash TEXT NOT NULL UNIQUE, created_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS sessions (hash TEXT PRIMARY KEY, profile_id TEXT NOT NULL REFERENCES profiles(id) ON DELETE CASCADE, expires_at INTEGER NOT NULL);
+CREATE INDEX IF NOT EXISTS sessions_owner ON sessions(profile_id);
+CREATE TABLE IF NOT EXISTS recipes (id TEXT PRIMARY KEY, profile_id TEXT NOT NULL REFERENCES profiles(id) ON DELETE CASCADE, title TEXT NOT NULL, data TEXT NOT NULL, version INTEGER NOT NULL DEFAULT 1, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS recipes_owner ON recipes(profile_id, updated_at);
+CREATE TABLE IF NOT EXISTS recipe_versions (recipe_id TEXT NOT NULL REFERENCES recipes(id) ON DELETE CASCADE, version INTEGER NOT NULL, data TEXT NOT NULL, created_at TEXT NOT NULL, PRIMARY KEY(recipe_id,version));
+CREATE TABLE IF NOT EXISTS journal (id TEXT PRIMARY KEY, profile_id TEXT NOT NULL REFERENCES profiles(id) ON DELETE CASCADE, recipe_id TEXT REFERENCES recipes(id) ON DELETE SET NULL, cooked_on TEXT NOT NULL, note TEXT NOT NULL, rating INTEGER, created_at TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS journal_owner ON journal(profile_id,cooked_on);
+CREATE TABLE IF NOT EXISTS foods (id TEXT PRIMARY KEY, profile_id TEXT NOT NULL REFERENCES profiles(id) ON DELETE CASCADE, name TEXT NOT NULL, data TEXT NOT NULL, created_at TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS foods_owner ON foods(profile_id);
+CREATE TABLE IF NOT EXISTS photos (id TEXT PRIMARY KEY, profile_id TEXT NOT NULL REFERENCES profiles(id) ON DELETE CASCADE, recipe_id TEXT NOT NULL REFERENCES recipes(id) ON DELETE CASCADE, object_key TEXT NOT NULL UNIQUE, mime TEXT NOT NULL, bytes INTEGER NOT NULL, sha256 TEXT NOT NULL, created_at TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS photos_owner ON photos(profile_id,recipe_id);
+CREATE TABLE IF NOT EXISTS publications (recipe_id TEXT PRIMARY KEY REFERENCES recipes(id) ON DELETE CASCADE, profile_id TEXT NOT NULL REFERENCES profiles(id) ON DELETE CASCADE, data TEXT NOT NULL, version INTEGER NOT NULL, photo_ids TEXT NOT NULL, published_at TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS publications_owner ON publications(profile_id);
+CREATE TABLE IF NOT EXISTS audit (id TEXT PRIMARY KEY, profile_id TEXT NOT NULL REFERENCES profiles(id) ON DELETE CASCADE, action TEXT NOT NULL, resource_id TEXT NOT NULL, created_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS request_limits (key TEXT PRIMARY KEY, count INTEGER NOT NULL, expires_at INTEGER NOT NULL);
+
+CREATE TABLE IF NOT EXISTS ai_daily (key TEXT PRIMARY KEY, calls INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS ai_runs (id TEXT PRIMARY KEY, profile_id TEXT NOT NULL REFERENCES profiles(id) ON DELETE CASCADE, model TEXT NOT NULL, status TEXT NOT NULL, input_tokens INTEGER, output_tokens INTEGER, created_at TEXT NOT NULL);

@@ -75,6 +75,8 @@ importers:
 
   apps/admin: {}
 
+  apps/kitchen: {}
+
   apps/mcp-gateway:
     dependencies:
       '@family/audit':
