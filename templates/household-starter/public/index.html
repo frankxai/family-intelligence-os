@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#213f36" />
+    <meta
+      name="description"
+      content="A hands-on, synthetic household planner from Starlight Family."
+    />
+    <title>Household · Starlight Family</title>
+    <link rel="icon" href="icon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="style.css" />
+    <script type="module" src="app.js"></script>
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to workspace</a>
+    <header>
+      <div class="mast">
+        <a class="brand" href="#home"
+          ><img src="icon.svg" width="33" height="33" alt="" />Starlight
+          <em>Family</em></a
+        ><span class="edition"><i></i> Demo household</span>
+      </div>
+    </header>
+    <div class="shell">
+      <nav aria-label="Family spaces" id="nav"></nav>
+      <main id="main" tabindex="-1"></main>
+    </div>
+    <footer>
+      <span>Starlight Family &nbsp; / &nbsp; Field edition 01</span
+      ><a
+        class="founderDownload"
+        href="https://starlight-family-starter.vercel.app/downloads/household-starter-0.1.0.zip"
+        >Download founder starter</a
+      ><button id="reset" type="button">Reset sample day</button>
+    </footer>
+    <div role="status" id="status" aria-live="polite"></div>
+    <noscript>Enable JavaScript to use this interactive sample day.</noscript>
+  </body>
+</html>

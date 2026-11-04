@@ -54,6 +54,12 @@ No real relative names or family records belong in repository fixtures. The UI d
 
 `@family/intake` turns submissions into quarantined cases. It can generate hashed, expiring, single-use tokens and assess baseline attachment eligibility, but it never accepts a claim. Actual upload storage, magic-byte inspection, malware scanning, identity re-verification, and notification delivery remain adapter boundaries that must fail closed.
 
+## Household application suite
+
+[Open the interactive sample household](https://starlight-family-starter.vercel.app/) · [Download the founder starter](https://starlight-family-starter.vercel.app/downloads/household-starter-0.1.0.zip) · [Production and edition plan](docs/household-suite.md)
+
+Household, Together, Care and Play share a synthetic day on one browser. The [standalone MIT starter](templates/household-starter/) includes a private-repository exporter and both hosting profiles.
+
 ## Reusable templates
 
 - `templates/vercel-family-portal`: Vercel project settings and environment contract.
