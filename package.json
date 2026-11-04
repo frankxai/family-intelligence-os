@@ -12,7 +12,7 @@
     "dev": "turbo run dev --parallel",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
-    "test": "vitest run",
+    "test": "vitest run && node --test templates/household-starter/tests/*.test.mjs",
     "test:e2e": "playwright test",
     "validate:connectors": "vitest run tests/connectors/manifest.test.ts"
   },
