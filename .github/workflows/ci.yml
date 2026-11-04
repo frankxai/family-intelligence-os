@@ -31,5 +31,7 @@ jobs:
         run: pnpm typecheck
       - name: Policy and contract tests
         run: pnpm test
+      - name: Kitchen pilot isolation and storage contracts
+        run: node --test apps/kitchen/test/*.test.mjs
       - name: Build
         run: pnpm build

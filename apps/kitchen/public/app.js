@@ -1,0 +1,721 @@
+const $ = (s) => document.querySelector(s),
+  esc = (s) =>
+    String(s ?? "").replace(
+      /[&<>"']/g,
+      (c) =>
+        ({
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          '"': "&quot;",
+          "'": "&#39;",
+        })[c],
+    );
+const icons = {
+  leaf: '<path d="M18 3C5 3 3 9 5 16c7 3 14-1 13-13Z"/><path d="m4 21 9-12"/>',
+  recipes:
+    '<path d="M4 4h6a3 3 0 0 1 3 3v14a5 5 0 0 0-4-2H4V4Zm16 0h-4a3 3 0 0 0-3 3v14a5 5 0 0 1 4-2h3V4Z"/>',
+  journal:
+    '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/>',
+  foods: '<path d="M5 8h14v12H5zM8 3h8v5H8zM9 13h6"/>',
+  studio:
+    '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="m4 16 5-5 4 4 3-3 5 5"/><circle cx="16" cy="8" r="1"/>',
+  guide: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7h.01"/>',
+  bowl: '<path d="M3 11h18c-1 7-5 10-9 10S4 18 3 11ZM8 7c-4-5 4-3 0-7m8 7c-4-5 4-3 0-7"/>',
+};
+const icon = (n) =>
+  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icons[n] || icons.leaf}</svg>`;
+let me = null,
+  recipes = [],
+  journal = [],
+  foods = [],
+  view = "recipes",
+  selected = null,
+  publicMode = location.pathname.startsWith("/blog/");
+let invitation =
+  new URLSearchParams(location.hash.slice(1)).get("invite") || "";
+if (invitation) history.replaceState(null, "", location.pathname);
+let timer;
+function toast(msg, error = false) {
+  const t = $("#toast");
+  t.textContent = msg;
+  t.className = error ? "toast-error" : "";
+  t.style.display = "block";
+  clearTimeout(timer);
+  timer = setTimeout(() => (t.style.display = "none"), 6000);
+}
+async function api(path, method = "GET", data) {
+  const opt = { method, credentials: "same-origin", headers: {} };
+  if (data !== undefined) {
+    opt.headers["Content-Type"] = "application/json";
+    opt.body = JSON.stringify(data);
+  }
+  const r = await fetch("/api" + path, opt);
+  const d = await r.json();
+  if (!r.ok) throw new Error(d.error || "Unable to complete request");
+  return d;
+}
+function modal(title, html) {
+  $("#modal").innerHTML =
+    `<div class="modal-head"><h2>${esc(title)}</h2><button class="close" data-action="close" aria-label="Close">×</button></div><div class="modal-body">${html}</div>`;
+  if (!$("#modal").open) $("#modal").showModal();
+}
+function close() {
+  $("#modal").close();
+}
+function download(name, data, type = "application/json") {
+  const url = URL.createObjectURL(new Blob([data], { type }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+async function copy(value) {
+  try {
+    await navigator.clipboard.writeText(value);
+    toast("Copied");
+  } catch {
+    modal("Copy this text", `<textarea rows="16">${esc(value)}</textarea>`);
+  }
+}
+const today = () => new Date().toLocaleDateString("en-CA");
+const heading = (eyebrow, title, desc) =>
+  `<div class="titlebar"><div class="eyebrow">${eyebrow}</div><h1>${title}</h1><p class="muted">${desc}</p></div>`;
+const empty = (title, desc, action = "new", cta = "Add a recipe") =>
+  `<div class="empty"><div><h3>${title}</h3><p class="muted">${desc}</p></div><button class="btn primary" data-action="${action}">${cta}</button></div>`;
+function shell(content) {
+  $("#app").innerHTML =
+    `<div class="shell"><aside class="sidebar"><div class="brand">${icon("leaf")}<div>Kitchen Notes<small>A little everyday joy</small></div></div><nav>${[
+      ["recipes", "Recipes"],
+      ["journal", "Cooking journal"],
+      ["foods", "Food library"],
+      ["studio", "Publishing studio"],
+      ["companion", "Cooking companion"],
+      ["guide", "Getting started"],
+    ]
+      .map(
+        ([id, label]) =>
+          `<button data-nav="${id}" class="${view === id ? "active" : ""}">${icon(id)}${label}</button>`,
+      )
+      .join(
+        "",
+      )}</nav><div class="sidebar-bottom"><div class="profile-label">${me ? esc(me.name) : "Your own little kitchen"}</div><p><span class="dot"></span>${me ? "Private notebook" : "Invitation-only pilot"}</p><button class="linkbutton" data-action="${me ? "settings" : "login"}">${me ? "Notebook settings" : "Open your notebook"}</button><p>Cook. Make a note.<br>Keep the good things.</p></div></aside><main class="main"><header class="topbar"><div class="eyebrow">${publicMode ? "FROM THE COMMUNITY" : me ? esc(me.name) + "’S KITCHEN" : "RECIPES · STORIES · EVERYDAY FOOD"}</div><div class="top-actions"><span class="pill">${me ? "Private by default" : "Pilot"}</span><button class="btn" data-action="${me ? "settings" : "login"}">${me ? "My notebook" : "Sign in"}</button><button class="btn primary" data-action="new">＋ New recipe</button></div></header>${content}<footer class="footer"><span>Kitchen Notes · Built with Starlight</span><span>Yours to keep. Yours to share.</span></footer></main></div>`;
+}
+function card(r, index = 0) {
+  const photo = r.photos?.[0];
+  return `<article class="card">${photo ? `<img class="card-image" loading="lazy" src="${publicMode ? "/public-photo/" : "/photo/"}${esc(typeof photo === "string" ? photo : photo.id)}" alt="${esc(r.title)}">` : `<div class="card-placeholder ${index % 3 === 1 ? "sage" : index % 3 === 2 ? "rose" : ""}">${icon("bowl")}</div>`}<div class="card-body"><div class="card-meta">${r.minutes ? r.minutes + " MIN · " : ""}${publicMode ? "SHARED RECIPE" : r.status === "tested" ? "COOKED & KEPT" : "PRIVATE DRAFT"}</div><h3>${esc(r.title)}</h3><p>${esc(r.description || "A recipe in the making.")}</p><div class="row spread"><span>${(
+    r.tags || []
+  )
+    .slice(0, 2)
+    .map((t) => `<span class="tag">${esc(t)}</span>`)
+    .join(
+      "",
+    )}${r.published ? '<span class="tag">Shared</span>' : ""}</span><button class="btn small" data-action="detail" data-id="${esc(r.id)}">Open recipe ↗</button></div></div></article>`;
+}
+function recipesPage() {
+  return `<section class="hero"><div class="hero-copy"><div class="eyebrow">THE EVERYDAY COOKBOOK</div><h1>Good food.<br>Worth keeping.</h1><p>A place for the dishes you love, the little things you learn, and the recipes that become yours.</p><button class="btn accent" data-action="new">Make a kitchen note <span>↗</span></button></div><div class="art" aria-hidden="true"><div class="plate"><div class="food"></div></div><div class="fork"></div><div class="art-label">a little of this, a little of that.</div></div></section><div class="section-head"><div><div class="eyebrow">YOUR COLLECTION</div><h2>The recipe shelf</h2></div><div class="stats"><span><strong>${recipes.length}</strong> recipes</span><span><strong>${journal.length}</strong> cooking notes</span></div></div>${recipes.length ? `<div class="section-head"><input id="search" class="search" placeholder="Find a dish, ingredient or memory…" aria-label="Search recipes"><button class="btn small" data-action="import">Import from ChatGPT</button></div><div class="grid" id="recipe-grid">${recipes.map(card).join("")}</div>` : empty("Start with something you cooked.", "A photo, a few ingredients, one sentence. It does not have to be a finished recipe.")}<div class="hint-strip"><strong>A photo is enough to begin.</strong><span>Keep it with a few notes. Let ChatGPT help shape the recipe, then make it your own.</span><button class="linkbutton" data-nav="guide">See how it works ↗</button></div><div class="section-head"><div><div class="eyebrow">AT YOUR PACE</div><h2>From your kitchen, into the world.</h2></div></div><div class="grid"><article class="card"><div class="card-body"><div class="eyebrow">01 / REMEMBER</div><h3>The little details matter.</h3><p>More lime next time. A lower heat. Someone asked for seconds. Keep a dated note every time you cook.</p><button class="linkbutton" data-nav="journal">Open the journal ↗</button></div></article><article class="card"><div class="card-body"><div class="eyebrow">02 / MAKE IT YOURS</div><h3>A living recipe.</h3><p>Refine the ingredients and method. Every saved version stays in your notebook.</p><button class="linkbutton" data-action="import">Bring in your notes ↗</button></div></article><article class="card"><div class="card-body"><div class="eyebrow">03 / SHARE A LITTLE</div><h3>A picture. A recipe. A story.</h3><p>Prepare a blog post, printable recipe card or Tumblr draft. No video required.</p><button class="linkbutton" data-nav="studio">Visit the studio ↗</button></div></article></div>`;
+}
+function journalPage() {
+  return (
+    heading(
+      "COOK · NOTICE · REMEMBER",
+      "Your kitchen, day by day.",
+      "The texture, the improvisation, the people around the table. Keep what you want to remember.",
+    ) +
+    `<div class="section-head"><h2>Cooking notes</h2><button class="btn primary" data-action="journal-new">＋ Log a cooking session</button></div>` +
+    (journal.length
+      ? journal
+          .map(
+            (j) =>
+              `<article class="journal-entry"><div class="journal-date">${esc(j.cooked_on.slice(8))}<small>${esc(j.cooked_on.slice(0, 7))}</small></div><div><div class="row spread"><h3>${esc(recipes.find((r) => r.id === j.recipe_id)?.title || "A note from the kitchen")}</h3><span class="muted">${j.rating ? "★".repeat(Math.floor(j.rating)) : ""}</span></div><p class="journal-note">${esc(j.note)}</p><button class="linkbutton" data-action="journal-delete" data-id="${j.id}">Remove note</button></div></article>`,
+          )
+          .join("")
+      : empty(
+          "Every dinner has a detail worth keeping.",
+          "Write a sentence today. A useful collection grows from ordinary moments.",
+          "journal-new",
+          "Write a note",
+        ))
+  );
+}
+function foodsPage() {
+  return (
+    heading(
+      "INGREDIENTS & NUTRITION",
+      "Know what goes into it.",
+      "Build your own ingredient library from package labels or traceable food data. All values are per 100 g.",
+    ) +
+    `<div class="section-head"><h2>Your ingredients</h2><button class="btn primary" data-action="food-new">＋ Add food or label</button></div><div class="notice">Recipe estimates use the weights and food records you choose. Unmatched ingredients and missing values remain visible. A food photo cannot establish exact nutrition or allergens.</div>` +
+    (foods.length
+      ? `<div class="panel table-scroll"><table class="table"><thead><tr><th>Food</th><th>kcal</th><th>Protein</th><th>Carbs</th><th>Fat</th><th>Source</th></tr></thead><tbody>${foods.map((f) => `<tr><td><strong>${esc(f.name)}</strong><br>${esc(f.state)}</td><td>${f.kcal ?? "—"}</td><td>${f.protein_g ?? "—"} g</td><td>${f.carbs_g ?? "—"} g</td><td>${f.fat_g ?? "—"} g</td><td>${esc(f.source)}</td></tr>`).join("")}</tbody></table></div>`
+      : empty(
+          "Start with the foods you actually use.",
+          "Add a yogurt label, a rice packet or a referenced ingredient. Match raw and cooked foods carefully.",
+          "food-new",
+          "Add your first ingredient",
+        )) +
+    `<div class="two-col"><div class="panel"><h3>Good sources, clear assumptions.</h3><p class="muted">Package labels are useful for your exact product. USDA FoodData Central offers searchable food composition records. Record the source and preparation state with every entry.</p><a class="btn small" href="https://fdc.nal.usda.gov/" target="_blank" rel="noopener noreferrer">Explore FoodData Central ↗</a></div><div class="panel"><h3>Food is more than a number.</h3><p class="muted">Keep the flavour, ease, seasonality and enjoyment in the journal. Nutrition is an optional reference, not a score for your cooking.</p></div></div>`
+  );
+}
+function studioPage() {
+  return (
+    heading(
+      "CREATE ONCE · SHARE WITH CARE",
+      "Your recipe, beautifully shared.",
+      "Turn one recipe into a post, a printable card, or a photo-led story. Your private notes stay in your notebook.",
+    ) +
+    `<div class="notice">Exports prepare drafts for you to review. Tumblr and YouTube accounts are not connected. Public recipe pages appear only after you explicitly publish a reviewed recipe.</div>` +
+    (recipes.length
+      ? `<div class="grid">${recipes.map(card).join("")}</div>`
+      : empty(
+          "The studio starts with one recipe.",
+          "Add a recipe to prepare a blog post, Tumblr draft, YouTube description or printable card.",
+        )) +
+    (me
+      ? `<div class="panel"><div class="row spread"><div><h3>Your public recipe shelf</h3><p class="muted">Only recipes you choose to publish appear here.</p></div><a class="btn" href="/blog/${me.id}" target="_blank" rel="noopener">Open public shelf ↗</a></div></div>`
+      : "")
+  );
+}
+const chatPrompt = `You are my careful cooking editor and kitchen journal companion. I use Kitchen Notes at https://starlight-kitchen.vercel.app. Read https://starlight-kitchen.vercel.app/guide.md when browsing is available; these instructions also stand alone.
+
+When I send notes, a dish photo, a label or an idea: preserve my voice and distinguish what I said from suggestions. Do not infer hidden ingredients, exact quantities, allergens, food safety or nutrition from a dish photo. Ask only for details needed to make the recipe usable. My notes remain the source of truth. Write in the language I use. Keep the tone personal, useful and unpretentious.
+
+Return (1) a polished recipe draft, (2) a dated cooking-journal note, (3) optional blog/Tumblr text or a 4-frame photo story when requested, and (4) one valid JSON recipe object in a code block for import into Kitchen Notes. The exact JSON shape is:
+{"title":"Dish name","description":"A short introduction","source_note":"My original notes, verbatim","source_url":"","servings":null,"minutes":null,"ingredients":[{"name":"Ingredient","amount":"quantity only when known","grams":null,"food_id":null}],"steps":["Confirmed step"],"tags":[],"notes":"Uncertainties and optional suggestions, clearly labelled","status":"draft","language":"en"}
+
+Use null for unknown numbers. language may be en, de, nl or vi. Do not invent missing source notes or imply you cooked or tasted anything. If a recipe comes from someone else, retain attribution and link, and help me write my own adaptation. Nutrition requires weighed quantities plus a matching label or identifiable source; show uncertainty and missing coverage. Keep personal diet information out of publication drafts. Never claim to save, upload, schedule or publish unless a connected tool actually succeeds. This ChatGPT conversation does not automatically have access to my private notebook: I copy the recipe JSON into the site's Import from ChatGPT form and upload photos there myself. Never ask me to paste my notebook key or invitation into chat. Proactive suggestions must be requested and grounded in the notes I share.`;
+function companionPage() {
+  return (
+    heading(
+      "A LITTLE HELP IN THE KITCHEN",
+      "From a few words, a recipe.",
+      "Bring your rough notes or ask for a new idea. The helper prepares a draft for you to review; it never saves or publishes on its own.",
+    ) +
+    `<div class="two-col"><div class="panel"><form id="assist-form"><label>Your notes or idea<textarea name="notes" maxlength="6000" required rows="8" placeholder="I made a rice bowl with… Or: help me plan a quick dinner using…"></textarea></label><label>Draft language<select name="language"><option value="en">English</option><option value="de">Deutsch</option><option value="nl">Nederlands</option><option value="vi">Tiếng Việt</option></select></label><label><input type="checkbox" name="consent" required>Send only these notes to Cloudflare AI to prepare a draft.</label><p class="form-note">Up to 10 drafts a day per notebook. No background agent runs. Review every suggestion before cooking or sharing.</p><button class="btn primary">Prepare a recipe draft</button></form></div><div><div class="panel"><h3>Working from a photo?</h3><p class="muted">Add the photo to a recipe, or send it to your own ChatGPT with the companion instructions. Import the resulting JSON here. The in-app helper currently uses text only.</p><button class="btn" data-action="copy-prompt">Copy ChatGPT instructions</button></div><div class="panel"><h3>Start with a useful question.</h3><p class="muted">“Turn these notes into a clear recipe.”<br>“Suggest a variation using these ingredients.”<br>“Help me plan three dinners in 30 minutes.”</p><p class="muted">For inspiration, suggestions are untested. For a recipe you cooked, your notes remain the source.</p></div></div></div>`
+  );
+}
+function guidePage() {
+  return (
+    heading(
+      "WELCOME TO YOUR KITCHEN",
+      "A small ritual. A growing cookbook.",
+      "Use it in English, German, Dutch or Vietnamese. A photo and a few honest notes are a perfect start.",
+    ) +
+    `<div class="two-col"><div><div class="guide-step"><div><h3>Open your own notebook.</h3><p class="muted">Use the invitation Frank gives you, choose a display name, and save your private notebook key in a password manager. You use that key on another device. Keep it out of ChatGPT and posts.</p></div></div><div class="guide-step"><div><h3>Capture while it is fresh.</h3><p class="muted">Tap New recipe. Write what you made, add the ingredients you remember, and attach a photo. Add a dated cooking note for what worked or what you would change.</p></div></div><div class="guide-step"><div><h3>Let ChatGPT help you shape it.</h3><p class="muted">Copy the companion instructions, paste them into your own ChatGPT, and send your notes or photos. Copy its recipe JSON back using Import from ChatGPT. Review before saving.</p></div></div><div class="guide-step"><div><h3>Share only when you are ready.</h3><p class="muted">Open a recipe and use Publishing studio to copy a post or print a recipe card. Publishing to your public shelf requires your notebook key and a rights confirmation. Private notes are excluded.</p></div></div></div><div><div class="panel"><div class="eyebrow">YOUR CHATGPT COMPANION</div><h3>Your words. A little help.</h3><p class="muted">The instructions work in your own ChatGPT. No shared login, no video routine, no need to finish everything in one sitting.</p><button class="btn primary" data-action="copy-prompt">Copy ChatGPT instructions</button><div class="actions"><a class="linkbutton" href="/guide.md" download>Download the guide</a><button class="linkbutton" data-action="import">Import a recipe JSON</button></div></div><div class="panel"><h3>What is connected today?</h3><p class="muted">Private notebooks, recipe versions, cooking notes, photo uploads, food-label values, publishing drafts and a read-only public food MCP endpoint.</p><p class="muted">The in-app cooking companion drafts from text on request. Automatic photo interpretation, private ChatGPT access, social posting and scheduled cooking agents are not connected yet. Photos are resized and re-encoded; keep your original on your phone.</p></div></div></div>`
+  );
+}
+function render() {
+  if (publicMode) {
+    shell(
+      heading(
+        "THE SHARED TABLE",
+        "Recipes worth passing on.",
+        "A collection of recipes intentionally shared by their cook.",
+      ) +
+        (recipes.length
+          ? `<div class="grid">${recipes.map(card).join("")}</div>`
+          : `<div class="panel"><h3>A table waiting to be set.</h3><p class="muted">No recipes have been published to this shelf yet.</p></div>`),
+    );
+    return;
+  }
+  shell(
+    (
+      {
+        recipes: recipesPage,
+        journal: journalPage,
+        foods: foodsPage,
+        studio: studioPage,
+        guide: guidePage,
+        companion: companionPage,
+      }[view] || recipesPage
+    )(),
+  );
+  $("#search")?.addEventListener("input", (e) => {
+    const q = e.target.value.toLowerCase();
+    $("#recipe-grid").innerHTML = recipes
+      .filter((r) =>
+        JSON.stringify([r.title, r.description, r.tags, r.ingredients])
+          .toLowerCase()
+          .includes(q),
+      )
+      .map(card)
+      .join("");
+  });
+}
+async function reload() {
+  if (me) {
+    const data = await Promise.all([
+      api("/recipes"),
+      api("/journal"),
+      api("/foods"),
+    ]);
+    recipes = data[0].recipes;
+    journal = data[1].entries;
+    foods = data[2].foods;
+  }
+  render();
+}
+function requireUser() {
+  if (me) return true;
+  login();
+  return false;
+}
+function login() {
+  modal(
+    invitation ? "Your kitchen starts here." : "Welcome back.",
+    invitation
+      ? `<form id="join-form"><p class="muted">Create a private notebook for your recipes and kitchen memories.</p><label>Your display name<input name="name" autocomplete="nickname" required maxlength="80" placeholder="What should we call you?"></label><p class="form-note">You will get a private notebook key. Save it before closing this page.</p><div class="modal-footer"><button class="btn primary">Create my notebook</button></div></form>`
+      : `<form id="login-form"><p class="muted">Use your private notebook key to continue on this device.</p><label>Notebook key<input name="key" type="password" required maxlength="64" autocomplete="current-password"></label><p class="form-note">New here? Open the invitation link Frank shared with you.</p><div class="modal-footer"><button class="btn primary">Open notebook</button></div></form>`,
+  );
+}
+function recipeForm(r = {}) {
+  if (!requireUser()) return;
+  selected = r.id || null;
+  modal(
+    r.id ? "Refine your recipe." : "What did you cook?",
+    `<form id="recipe-form"><label>Recipe name<input name="title" required maxlength="160" value="${esc(r.title)}" placeholder="The dish you want to remember"></label><label>A little introduction<textarea name="description" rows="2" maxlength="2000" placeholder="What makes this one yours?">${esc(r.description)}</textarea></label><label>Your original kitchen notes<textarea name="source_note" maxlength="12000" placeholder="Write freely. This can be the whole recipe for now.">${esc(r.source_note)}</textarea></label><div class="form-grid"><label>Servings<input type="number" name="servings" min="0.1" max="1000" step="any" value="${r.servings ?? ""}" placeholder="Unknown is fine"></label><label>Total minutes<input type="number" name="minutes" min="0" max="10000" step="any" value="${r.minutes ?? ""}"></label></div><label>Ingredients · one per line<textarea name="ingredients" rows="5" placeholder="2 tbsp | olive oil&#10;1 | lime&#10;Fresh herbs">${esc((r.ingredients || []).map((i) => (i.amount ? i.amount + " | " + i.name : i.name)).join("\n"))}</textarea></label><p class="form-note">Optional format: quantity | ingredient. Leave quantities unknown until confirmed.</p><label>Method · one step per line<textarea name="steps" rows="5" placeholder="Add the steps you know.">${esc((r.steps || []).join("\n"))}</textarea></label><label>Notes for next time<textarea name="notes" maxlength="4000">${esc(r.notes)}</textarea></label><div class="form-grid"><label>Tags<input name="tags" value="${esc((r.tags || []).join(", "))}" placeholder="weeknight, comfort, vegetarian"></label><label>Status<select name="status"><option value="draft">Still experimenting</option><option value="tested" ${r.status === "tested" ? "selected" : ""}>Cooked & kept</option></select></label></div><label>Inspired by · source link<input type="url" name="source_url" value="${esc(r.source_url)}" placeholder="https://…"></label><label>Add a dish photo<input type="file" name="photo" accept="image/jpeg,image/png,image/webp" capture="environment"></label><p class="form-note">Phone photos are resized to 1600 px and saved privately as JPEGs without location metadata. Keep your original.</p><div class="modal-footer"><button type="button" class="btn" data-action="close">Keep thinking</button><button class="btn primary">Save recipe</button></div></form>`,
+  );
+}
+function details(id) {
+  const r = recipes.find((x) => x.id === id);
+  if (!r) return;
+  selected = id;
+  modal(
+    r.title,
+    `<div class="recipe-detail">${r.photos?.length ? `<div class="photo-strip">${r.photos.map((p) => `<img src="${publicMode ? "/public-photo/" : "/photo/"}${esc(typeof p === "string" ? p : p.id)}" alt="${esc(r.title)}">`).join("")}</div>` : ""}<p>${esc(r.description)}</p><div class="row muted"><span>${r.servings ? r.servings + " servings" : "Servings not recorded"}</span><span>${r.minutes ? r.minutes + " minutes" : ""}</span>${!publicMode ? `<span>Version ${r.version}</span>` : ""}</div><h3>Ingredients</h3><ul class="ingredient-list">${r.ingredients.map((i) => `<li>${esc([i.amount, i.name].filter(Boolean).join(" "))}</li>`).join("") || '<li class="muted">Ready when you are.</li>'}</ul><h3>Method</h3><ol>${r.steps.map((s) => `<li>${esc(s)}</li>`).join("") || '<li class="muted">Still taking shape.</li>'}</ol>${r.source_url ? `<p class="muted">Inspired by <a href="${esc(r.source_url)}" target="_blank" rel="noopener noreferrer">the original source ↗</a></p>` : ""}${!publicMode ? `${r.source_note ? `<h3>Original notes <span class="pill">Private</span></h3><p class="journal-note">${esc(r.source_note)}</p>` : ""}${r.notes ? `<h3>For next time <span class="pill">Private</span></h3><p class="journal-note">${esc(r.notes)}</p>` : ""}<hr class="divider"><div class="actions"><button class="btn primary" data-action="edit" data-id="${id}">Edit recipe</button><button class="btn" data-action="journal-new" data-id="${id}">I cooked this</button><button class="btn" data-action="exports" data-id="${id}">Publishing studio</button><button class="btn" data-action="nutrition" data-id="${id}">Nutrition</button><button class="btn" data-action="versions" data-id="${id}">Versions</button><button class="btn danger" data-action="recipe-delete" data-id="${id}">Delete recipe</button></div>` : ""}</div>`,
+  );
+}
+function journalForm(id) {
+  if (!requireUser()) return;
+  modal(
+    "A note from your kitchen.",
+    `<form id="journal-form"><label>Recipe<select name="recipe_id"><option value="">A general kitchen note</option>${recipes.map((r) => `<option value="${r.id}" ${id === r.id ? "selected" : ""}>${esc(r.title)}</option>`).join("")}</select></label><div class="form-grid"><label>Cooked on<input type="date" name="cooked_on" value="${today()}" required></label><label>Would you cook it again?<select name="rating"><option value="">No rating</option>${[5, 4, 3, 2, 1].map((n) => `<option value="${n}">${n} / 5</option>`).join("")}</select></label></div><label>Your memory<textarea name="note" maxlength="4000" required rows="5" placeholder="What worked? What would you change? Who enjoyed it?"></textarea></label><div class="modal-footer"><button class="btn primary">Save cooking note</button></div></form>`,
+  );
+}
+function foodForm() {
+  if (!requireUser()) return;
+  modal(
+    "Add an ingredient.",
+    `<form id="food-form"><label>Food name<input name="name" required maxlength="160" placeholder="The exact product or ingredient"></label><div class="form-grid"><label>Preparation state<input name="state" value="as sold" placeholder="raw, cooked, drained…"></label><label>Source / label<input name="source" required maxlength="500" placeholder="Brand and label date, or FDC ID"></label></div><label>Source URL · optional<input name="source_url" type="url"></label><div class="notice">Values per 100 g. Leave unavailable fields empty; they stay unknown.</div><div class="form-grid">${[
+      ["kcal", "Energy (kcal)"],
+      ["protein_g", "Protein (g)"],
+      ["carbs_g", "Carbohydrate (g)"],
+      ["fat_g", "Fat (g)"],
+      ["fiber_g", "Fibre (g)"],
+      ["salt_g", "Salt (g)"],
+    ]
+      .map(
+        ([k, l]) =>
+          `<label>${l}<input type="number" name="${k}" min="0" max="${k === "kcal" ? 1000 : 100}" step="any"></label>`,
+      )
+      .join(
+        "",
+      )}</div><p class="form-note">Use salt, not sodium. Do not copy a per-serving label without converting its serving weight to 100 g.</p><div class="modal-footer"><button class="btn primary">Save ingredient</button></div></form>`,
+  );
+}
+function importForm() {
+  if (!requireUser()) return;
+  modal(
+    "Bring your recipe home.",
+    `<form id="import-form"><p class="muted">Paste the recipe JSON from your ChatGPT companion. You can review it before saving. It always enters as a private draft.</p><label>Recipe JSON<textarea name="json" rows="13" required maxlength="90000" placeholder='{"title":"…","ingredients":[],"steps":[]}'></textarea></label><div class="modal-footer"><button type="button" class="btn" data-action="copy-prompt">Copy companion instructions</button><button class="btn primary">Review recipe</button></div></form>`,
+  );
+}
+async function studio(id) {
+  const r = recipes.find((x) => x.id === id);
+  selected = id;
+  const data = await api("/recipes/" + id + "/exports");
+  modal(
+    "Share something delicious.",
+    `<p class="muted">${esc(r.title)} · Public copies exclude your original notes, private notes and nutrition mappings.</p><div class="actions"><button class="btn primary" data-action="copy-post">Copy blog / Tumblr text</button><button class="btn" data-action="download-tumblr">Tumblr draft JSON</button><button class="btn" data-action="copy-youtube">YouTube description</button><button class="btn" data-action="print">Print recipe card</button><button class="btn" data-action="download-recipe">Recipe JSON-LD</button></div><pre class="pre">${esc(data.markdown)}</pre><div class="notice">These are drafts you can paste into your accounts. Social accounts are not connected. Print your card to PDF, or use the recipe and photo for an image post.</div><hr class="divider"><div class="row spread"><div><h3>Your public recipe shelf</h3><p class="muted">${r.published ? "A reviewed snapshot is shared. Private edits do not update it until you publish again." : "This recipe is private. Publishing creates a separate reviewed copy."}</p></div><button class="btn accent" data-action="publish-form">${r.published ? "Review & update" : "Review & publish"}</button>${r.published ? `<a class="btn" href="/r/${r.id}" target="_blank" rel="noopener">Open public recipe ↗</a><button class="btn" data-action="unpublish">Remove public copy</button>` : ""}</div>`,
+  );
+  window.kitchenExport = data;
+}
+function publishForm() {
+  const r = recipes.find((x) => x.id === selected);
+  modal(
+    "Review your public recipe.",
+    `<form id="publish-form"><p><strong>${esc(r.title)}</strong></p><p class="muted">This publishes the title, introduction, ingredients, method, tags, source link and every attached recipe photo. Your private notes stay private. Public copies may be saved by other people.</p><label><input type="checkbox" name="rights" required>I reviewed the recipe and all photos, have the right to share them, and they contain no private information or identifiable people without permission.</label><label>Your notebook key<input type="password" name="key" required maxlength="64" autocomplete="current-password"></label><div class="modal-footer"><button type="button" class="btn" data-action="close">Keep private</button><button class="btn accent">Publish reviewed recipe</button></div></form>`,
+  );
+}
+async function nutritionForm(id) {
+  selected = id;
+  const r = recipes.find((x) => x.id === id),
+    n = await api("/recipes/" + id + "/nutrition");
+  modal(
+    "Nutrition, with its sources.",
+    `<p class="muted">Match each ingredient to one of your food records and its weighed amount. Values remain an estimate.</p><form id="nutrition-form">${r.ingredients.length ? '<div class="ingredients-map muted"><span>Ingredient</span><span>Grams</span><span>Food record</span></div>' : ""}${r.ingredients.map((i, n) => `<div class="ingredients-map"><span>${esc(i.name)}</span><input aria-label="Grams of ${esc(i.name)}" name="grams_${n}" type="number" min="0" max="100000" step="any" value="${i.grams ?? ""}"><select aria-label="Food source for ${esc(i.name)}" name="food_${n}"><option value="">Not matched</option>${foods.map((f) => `<option value="${f.id}" ${f.id === i.food_id ? "selected" : ""}>${esc(f.name)} (${esc(f.state)})</option>`).join("")}</select></div>`).join("")}<div class="modal-footer"><button type="button" class="btn" data-action="food-new">Add a food label</button><button class="btn primary">Save matches</button></div></form><hr class="divider"><h3>${n.status === "incomplete" ? "Incomplete estimate" : "Estimated nutrition"}</h3>${n.status === "incomplete" ? `<div class="notice warning">Unmatched ingredients: ${esc(n.missing.join(", ") || "no ingredients yet")}. Totals remain unknown until every ingredient is matched.</div>` : ""}<p class="muted">${n.per_serving ? "Per serving" : "Whole recipe · servings not recorded"}</p><div>${Object.entries(
+      n.per_serving || n.recipe_total,
+    )
+      .map(
+        ([k, v]) =>
+          `<div class="metric"><strong>${v ?? "—"}</strong><small>${esc(k.replace("_g", " (g)"))}</small></div>`,
+      )
+      .join("")}</div><p class="form-note">${esc(n.note)}</p>`,
+  );
+}
+function settings() {
+  if (!requireUser()) return;
+  modal(
+    "Your notebook.",
+    `<form id="settings-form"><label>Display name<input name="name" required maxlength="80" value="${esc(me.name)}"></label><label>A short introduction<textarea name="bio" maxlength="300">${esc(me.bio)}</textarea></label><label>Cooking preferences · private<textarea name="preferences" maxlength="1000" placeholder="Favourite cuisines, equipment, time available…">${esc(me.preferences)}</textarea></label><p class="form-note">This pilot is for recipes and cooking notes, not medical records. The hosting owner can administer stored data; this is not end-to-end encrypted.</p><div class="modal-footer"><button class="btn primary">Save preferences</button></div></form><hr class="divider"><div class="actions"><button class="btn" data-action="export-all">Export notebook JSON</button><button class="btn" data-action="download-photos">Download photos</button><button class="btn" data-action="logout">Sign out</button></div><p class="form-note">JSON export contains recipes, versions, journal, food records and photo references. Download the JPEGs separately. Notebook recovery needs your key; email recovery is not configured.</p>`,
+  );
+}
+async function photoUpload(file, id) {
+  if (!file?.size) return;
+  if (!["image/jpeg", "image/png", "image/webp"].includes(file.type))
+    throw new Error(
+      "Use a JPEG, PNG or WebP photo. Export HEIC as JPEG first.",
+    );
+  if (file.size > 20_000_000)
+    throw new Error("Photo exceeds 20 MB; choose a smaller copy.");
+  const bitmap = await createImageBitmap(file);
+  const scale = Math.min(1, 1600 / Math.max(bitmap.width, bitmap.height));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(bitmap.width * scale);
+  canvas.height = Math.round(bitmap.height * scale);
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  bitmap.close();
+  const blob = await new Promise((resolve) =>
+    canvas.toBlob(resolve, "image/jpeg", 0.87),
+  );
+  if (!blob) throw new Error("Could not process this photo");
+  const res = await fetch("/api/recipes/" + id + "/photo", {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "Content-Type": "image/jpeg" },
+    body: blob,
+  });
+  if (!res.ok) throw new Error((await res.json()).error);
+}
+const val = (fd, k) => String(fd.get(k) || ""),
+  valnum = (fd, k) => (val(fd, k) === "" ? null : Number(fd.get(k)));
+let imported = null;
+document.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const f = e.target,
+    fd = new FormData(f),
+    btn = f.querySelector("button[type=submit],button:not([type])");
+  if (btn) btn.disabled = true;
+  try {
+    if (f.id === "assist-form") {
+      if (!requireUser()) return;
+      toast("Preparing a draft…");
+      const result = await api("/assist", "POST", {
+        notes: val(fd, "notes"),
+        language: val(fd, "language"),
+        consent: fd.has("consent"),
+      });
+      imported = result.draft;
+      recipeForm(imported);
+      toast(
+        "Draft ready for your review. " +
+          result.remaining_today +
+          " drafts left today.",
+      );
+    } else if (f.id === "join-form") {
+      const r = await api("/join", "POST", {
+        invite: invitation,
+        name: val(fd, "name"),
+      });
+      invitation = "";
+      me = r.profile;
+      await reload();
+      modal(
+        "Save your private notebook key.",
+        `<p class="muted">This key opens your notebook on any device. Save it in your password manager now. It is shown only once. Never paste it into ChatGPT or publish it.</p><div class="secret">${r.recovery_key}</div><div class="modal-footer"><button class="btn primary" data-action="close">I saved my key</button></div>`,
+      );
+    } else if (f.id === "login-form") {
+      me = (await api("/open", "POST", { key: val(fd, "key").trim() })).profile;
+      close();
+      await reload();
+      toast("Welcome back.");
+    } else if (f.id === "recipe-form") {
+      const old = recipes.find((r) => r.id === selected) || imported || {};
+      const ingredients = val(fd, "ingredients")
+        .split("\n")
+        .filter((s) => s.trim())
+        .map((s) => {
+          const parts = s.split("|");
+          const i = {
+            name: parts.length > 1 ? parts.slice(1).join("|").trim() : s.trim(),
+            amount: parts.length > 1 ? parts[0].trim() : "",
+            grams: null,
+            food_id: null,
+          };
+          return (
+            old.ingredients?.find(
+              (o) => o.name === i.name && o.amount === i.amount,
+            ) || i
+          );
+        });
+      const d = {
+        title: val(fd, "title"),
+        description: val(fd, "description"),
+        source_note: val(fd, "source_note"),
+        source_url: val(fd, "source_url"),
+        servings: valnum(fd, "servings"),
+        minutes: valnum(fd, "minutes"),
+        ingredients,
+        steps: val(fd, "steps")
+          .split("\n")
+          .filter((s) => s.trim()),
+        notes: val(fd, "notes"),
+        tags: val(fd, "tags")
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean),
+        status: val(fd, "status"),
+        language: old.language || "en",
+        version: old.version,
+      };
+      const saved = await api(
+        "/recipes" + (selected ? "/" + selected : ""),
+        selected ? "PUT" : "POST",
+        d,
+      );
+      imported = null;
+      try {
+        await photoUpload(fd.get("photo"), saved.id);
+      } catch (error) {
+        close();
+        await reload();
+        details(saved.id);
+        toast("Recipe saved. Photo was not saved: " + error.message, true);
+        return;
+      }
+      close();
+      await reload();
+      toast("Recipe saved to your notebook.");
+      details(saved.id);
+    } else if (f.id === "journal-form") {
+      await api("/journal", "POST", {
+        recipe_id: val(fd, "recipe_id") || null,
+        cooked_on: val(fd, "cooked_on"),
+        note: val(fd, "note"),
+        rating: valnum(fd, "rating"),
+      });
+      close();
+      view = "journal";
+      await reload();
+      toast("A little memory, kept.");
+    } else if (f.id === "food-form") {
+      const d = Object.fromEntries(fd);
+      for (const k of [
+        "kcal",
+        "protein_g",
+        "carbs_g",
+        "fat_g",
+        "fiber_g",
+        "salt_g",
+      ])
+        d[k] = valnum(fd, k);
+      await api("/foods", "POST", d);
+      close();
+      view = "foods";
+      await reload();
+      toast("Food source saved.");
+    } else if (f.id === "import-form") {
+      let raw = val(fd, "json")
+        .trim()
+        .replace(/^```(?:json)?\s*/, "")
+        .replace(/\s*```$/, "");
+      const d = JSON.parse(raw);
+      if (!d.title || !Array.isArray(d.ingredients) || !Array.isArray(d.steps))
+        throw new Error(
+          "The JSON needs a title, ingredients array and steps array.",
+        );
+      imported = {
+        ...d,
+        id: undefined,
+        status: "draft",
+        ingredients: d.ingredients.map((i) =>
+          typeof i === "string" ? { name: i, amount: "" } : i,
+        ),
+      };
+      recipeForm(imported);
+    } else if (f.id === "nutrition-form") {
+      const r = recipes.find((x) => x.id === selected);
+      await api("/recipes/" + r.id, "PUT", {
+        ...r,
+        ingredients: r.ingredients.map((i, n) => ({
+          ...i,
+          grams: valnum(fd, "grams_" + n),
+          food_id: val(fd, "food_" + n) || null,
+        })),
+      });
+      await reload();
+      await nutritionForm(r.id);
+      toast("Nutrition matches saved.");
+    } else if (f.id === "settings-form") {
+      await api("/me", "PATCH", Object.fromEntries(fd));
+      me = { ...me, ...Object.fromEntries(fd) };
+      close();
+      render();
+      toast("Preferences saved.");
+    } else if (f.id === "publish-form") {
+      const r = recipes.find((x) => x.id === selected);
+      await api("/recipes/" + r.id + "/publish", "POST", {
+        version: r.version,
+        confirm: "PUBLISH_RECIPE",
+        rights_confirmed: fd.has("rights"),
+        key: val(fd, "key").trim(),
+      });
+      close();
+      await reload();
+      toast("Your reviewed recipe is on your public shelf.");
+    }
+  } catch (error) {
+    toast(error.message, true);
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+});
+document.addEventListener("click", async (e) => {
+  const el = e.target.closest("[data-action],[data-nav]");
+  if (!el) return;
+  if (el.dataset.nav) {
+    if (publicMode) {
+      location.href = "/?view=" + el.dataset.nav;
+      return;
+    }
+    view = el.dataset.nav;
+    render();
+    return;
+  }
+  const a = el.dataset.action,
+    id = el.dataset.id;
+  try {
+    if (a === "close") close();
+    else if (a === "new") {
+      imported = null;
+      recipeForm();
+    } else if (a === "login") login();
+    else if (a === "detail") details(id);
+    else if (a === "edit") {
+      imported = null;
+      recipeForm(recipes.find((x) => x.id === id));
+    } else if (a === "journal-new") journalForm(id);
+    else if (a === "food-new") foodForm();
+    else if (a === "import") importForm();
+    else if (a === "copy-prompt") await copy(chatPrompt);
+    else if (a === "settings") settings();
+    else if (a === "exports") await studio(id);
+    else if (a === "nutrition") await nutritionForm(id);
+    else if (a === "publish-form") publishForm();
+    else if (a === "recipe-delete") {
+      if (
+        confirm(
+          "Permanently delete this recipe, its versions, photos and public copy? Cooking journal notes will remain.",
+        )
+      ) {
+        await api("/recipes/" + id, "DELETE", {});
+        close();
+        await reload();
+        toast("Recipe removed.");
+      }
+    } else if (a === "journal-delete") {
+      if (confirm("Remove this cooking note?")) {
+        await api("/journal/" + id, "DELETE");
+        await reload();
+      }
+    } else if (a === "logout") {
+      await api("/logout", "POST", {});
+      me = null;
+      recipes = [];
+      journal = [];
+      foods = [];
+      close();
+      render();
+    } else if (a === "versions") {
+      const data = await api("/recipes/" + id + "/versions");
+      modal(
+        "How this recipe grew.",
+        data.versions
+          .map(
+            (v) =>
+              `<div class="panel"><div class="eyebrow">VERSION ${v.version} · ${esc(v.created_at.slice(0, 10))}</div><pre class="pre">${esc(JSON.stringify(JSON.parse(v.data), null, 2))}</pre></div>`,
+          )
+          .join(""),
+      );
+    } else if (a === "copy-post") await copy(window.kitchenExport.markdown);
+    else if (a === "copy-youtube")
+      await copy(window.kitchenExport.youtube_description);
+    else if (a === "download-tumblr")
+      download(
+        "tumblr-recipe-draft.json",
+        JSON.stringify(window.kitchenExport.tumblr, null, 2),
+      );
+    else if (a === "download-recipe")
+      download(
+        "recipe-schema.json",
+        JSON.stringify(window.kitchenExport.recipe_jsonld, null, 2),
+      );
+    else if (a === "print") {
+      const r = recipes.find((x) => x.id === selected);
+      $("#print-card").innerHTML =
+        `<p class="muted">KITCHEN NOTES</p><h1>${esc(r.title)}</h1>${r.photos?.[0] ? `<img src="/photo/${r.photos[0].id}" alt="${esc(r.title)}">` : ""}<p>${esc(r.description)}</p><p class="muted">${r.servings ? r.servings + " servings · " : ""}${r.minutes ? r.minutes + " minutes" : ""}</p><h2>Ingredients</h2><ul>${r.ingredients.map((i) => `<li>${esc([i.amount, i.name].filter(Boolean).join(" "))}</li>`).join("")}</ul><h2>Method</h2><ol>${r.steps.map((s) => `<li>${esc(s)}</li>`).join("")}</ol>${r.source_url ? `<p class="muted">Inspired by ${esc(r.source_url)}</p>` : ""}`;
+      await Promise.all(
+        [...$("#print-card").querySelectorAll("img")].map((i) =>
+          i.decode().catch(() => {}),
+        ),
+      );
+      window.print();
+    } else if (a === "unpublish") {
+      if (confirm("Remove the public copy? Your private recipe stays.")) {
+        await api("/recipes/" + selected + "/publish", "DELETE");
+        close();
+        await reload();
+        toast("Public copy removed.");
+      }
+    } else if (a === "export-all") {
+      const key = prompt(
+        "Enter your notebook key to export your private data.",
+      );
+      if (key) {
+        const d = await api("/export", "POST", { key: key.trim() });
+        download(
+          "kitchen-notebook-" + today() + ".json",
+          JSON.stringify(d, null, 2),
+        );
+        toast("Notebook JSON downloaded. Photos are separate.");
+      }
+    } else if (a === "download-photos") {
+      const ps = recipes.flatMap((r) =>
+        (r.photos || []).map((p) => ({ ...p, title: r.title })),
+      );
+      modal(
+        "Keep your original collection.",
+        `<p class="muted">Download each saved JPEG. Your browser may ask before downloading several files.</p>${ps.length ? ps.map((p) => `<p><a class="btn" href="/photo/${p.id}" download="kitchen-${p.id}.jpg">${esc(p.title)} · photo</a></p>`).join("") : "<p>No photos yet.</p>"}`,
+      );
+    }
+  } catch (error) {
+    toast(error.message, true);
+  }
+});
+async function boot() {
+  view = new URLSearchParams(location.search).get("view") || "recipes";
+  if (location.pathname === "/start") view = "guide";
+  if (publicMode) {
+    recipes = (
+      await api(
+        "/public?profile=" +
+          encodeURIComponent(location.pathname.split("/")[2]),
+      )
+    ).recipes;
+    render();
+    return;
+  }
+  try {
+    me = (await api("/me")).profile;
+  } catch {}
+  await reload();
+  if (invitation) login();
+}
+boot().catch((e) => {
+  render();
+  toast(e.message, true);
+});
